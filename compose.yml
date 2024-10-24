@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  app:
+    image: ghcr.io/sandrodegiorgi/rbs-openai-simple-docker:latest  # Your GHCR image
+    ports:
+      - "5000:5000"  # Map Flask app port 5000 to your host port
+    environment:
+      # Add any environment variables your Flask app requires
+      - FLASK_ENV=production
+      - OPENAI_API_KEY=${OPENAI_API_KEY}  # Pass your OpenAI API key from the .env file or system env
+    restart: unless-stopped
+
