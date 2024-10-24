@@ -1,6 +1,7 @@
 name: Build and Docker Schwarzwald Style
 
 on: push
+  workflow_dispatch: # Allows manual triggering of workflow
 
 jobs:
   # Job 1: Build Job
