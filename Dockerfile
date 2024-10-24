@@ -3,14 +3,15 @@ FROM node:18-alpine as build-stage
 
 WORKDIR /app
 
-# Copy the package.json and install dependencies
-COPY frontend/package.json frontend/yarn.lock ./
+# Copy the package.json and package-lock.json to install dependencies
+COPY frontend/package.json frontend/package-lock.json ./
 
-RUN yarn install
+# Install Node.js dependencies using npm
+RUN npm install
 
 # Copy the rest of the React app code and build it
 COPY frontend/ ./
-RUN yarn build
+RUN npm run build
 
 # Step 2: Set up Flask backend
 FROM python:3.9-slim as production-stage
