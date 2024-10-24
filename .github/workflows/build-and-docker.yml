@@ -1,0 +1,84 @@
+name: Build and Docker Schwarzwald Style
+
+on: push
+
+jobs:
+  # Job 1: Build Job
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout Code
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Node.js for React frontend
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+
+      # Step 3: Install Node.js dependencies for React frontend
+      - name: Install Dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      # Step 4: Build React Project
+      - name: Build React Project
+        working-directory: ./frontend
+        run: |
+          CI=false npm run build  # Prevent environment variable issues during build
+
+      # Step 5: Copy React build to Flask static folder
+      - name: Copy React build to Flask static folder
+        run: |
+          cp -R ./frontend/build/* ./backend/static/
+
+      # Step 6: Set up Python for Flask backend
+      - name: Install Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      # Step 7: Install Flask dependencies
+      - name: Install Flask dependencies
+        working-directory: ./backend
+        run: |
+          pip install -r requirements.txt
+
+      # Step 8: Upload Artifact for Docker Job
+      - name: Upload Backend and Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: flask-build
+          path: ./backend
+
+  # Job 2: Docker Job (depends on build job)
+  docker:
+    runs-on: ubuntu-latest
+    needs: build  # This job will run only after the 'build' job completes
+
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step 2: Download the build artifact (backend with React build)
+      - name: Download Artifacts from Build Job
+        uses: actions/download-artifact@v3
+        with:
+          name: flask-build
+
+      # Step 3: Login to DockerHub (using GitHub secrets)
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Docker image
+        run: docker build -t ghcr.io/${{ github.repository }}/rbs-openai-simple-docker:latest .
+
+      - name: Push Docker image
+        run: docker push ghcr.io/${{ github.repository }}/rbs-openai-simple-docker:latest
