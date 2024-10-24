@@ -1,7 +1,10 @@
-name: Build and Docker Schwarzwald Style
+name: Build and Docker Schwarzwald Bitschubbser Style
 
-on: push
-  workflow_dispatch: # Allows manual triggering of workflow
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # This allows manual triggering of the action
 
 jobs:
   # Job 1: Build Job
