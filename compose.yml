@@ -4,10 +4,15 @@ services:
     image: "ghcr.io/sandrodegiorgi/rbs-openai-simple-docker/rbs-openai-simple-docker:latest"
     container_name: rbs-openai
     ports:
-      - "5000:5000"  # Map Flask app port 5000 to your host port
+      - "5000:5000"
     environment:
-      # Add any environment variables your Flask app requires
       - FLASK_ENV=production
-      - OPENAI_API_KEY=${OPENAI_API_KEY}  # Pass your OpenAI API key from the .env file or system env
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     restart: unless-stopped
-    
+    pull_policy: always
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true

@@ -25,8 +25,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy Flask backend code
 COPY backend/ ./
 
-# Copy React build from the previous stage to the root directory of the Flask app
-COPY --from=build-stage /app/build ./static
+# Copy React build directly to the root of Flask app
+COPY --from=build-stage /app/build/ .  # Copy everything from build directly to root
 
 # Expose the Flask port
 EXPOSE 5000
