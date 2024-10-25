@@ -10,7 +10,9 @@ load_dotenv()
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-app = Flask(__name__)
+# app = Flask(__name__)
+app = Flask(__name__, static_folder="static")
+
 # CORS(app)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
