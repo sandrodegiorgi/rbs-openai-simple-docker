@@ -11,7 +11,8 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # app = Flask(__name__)
-app = Flask(__name__, static_folder="static")
+# app = Flask(__name__, static_folder="static")
+app = Flask(__name__, static_folder=".")
 
 # CORS(app)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -28,10 +29,11 @@ def load_system_message(assistant_type):
 @app.route("/<path:path>")
 def serve_react(path):
     if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
-        return send_from_directory(app.static_folder, path)
+        # return send_from_directory(app.static_folder, path)
+        return send_from_directory(".", path)
     else:
-        # Serve the React app's index.html for all unmatched routes
-        return send_from_directory(app.static_folder, "index.html")
+        # return send_from_directory(app.static_folder, "index.html")
+        return send_from_directory(".", "index.html")
 
 @app.route('/api/chat', methods=['GET'])
 def chat():
