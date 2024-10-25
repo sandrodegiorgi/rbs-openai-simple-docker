@@ -4,7 +4,8 @@ import axios from 'axios';
 
 import Home from './pages/Home/Home';
 
-const SERVER_URL = 'http://127.0.0.1:5000';  // Update this if needed!
+// const SERVER_URL = 'http://127.0.0.1:5000';
+const SERVER_URL = 'https://rbs-ai.degiorgi.de';
 
 function App() {
   const [prompt, setPrompt] = useState('');
@@ -20,7 +21,7 @@ function App() {
 
     // Open an EventSource for streaming the response
     // const eventSource = new EventSource(`${SERVER_URL}/chat?prompt=${encodeURIComponent(prompt)}`);
-    const eventSource = new EventSource(`${SERVER_URL}/chat?prompt=${encodeURIComponent(prompt)}&assistant_type=${encodeURIComponent(assistantType)}`);
+    const eventSource = new EventSource(`${SERVER_URL}/api/chat?prompt=${encodeURIComponent(prompt)}&assistant_type=${encodeURIComponent(assistantType)}`);
 
     // Listen for each chunk of streamed data
     eventSource.onmessage = (event) => {
@@ -37,7 +38,7 @@ function App() {
   const handleImageSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`${SERVER_URL}/image`, { prompt });
+      const res = await axios.post(`${SERVER_URL}/api/image`, { prompt });
       setImageURL(res.data.image_url);
     } catch (err) {
       console.error(err);

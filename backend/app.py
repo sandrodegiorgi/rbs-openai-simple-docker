@@ -1,4 +1,4 @@
-from flask import Flask, request, Response, jsonify
+from flask import Flask, request, Response, jsonify, send_from_directory
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
@@ -22,7 +22,16 @@ def load_system_message(assistant_type):
     else:
         return "You are a helpful assistant."
 
-@app.route('/chat', methods=['GET'])
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve_react(path):
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    else:
+        # Serve the React app's index.html for all unmatched routes
+        return send_from_directory(app.static_folder, "index.html")
+
+@app.route('/api/chat', methods=['GET'])
 def chat():
     prompt = request.args.get('prompt')
     assistant_type = request.args.get('assistant_type', 'friendly')
@@ -31,7 +40,7 @@ def chat():
     system_message_content = load_system_message(assistant_type)
     system_message = {"role": "system", "content": system_message_content}
     
-    print("system_message: ", system_message)   
+    # print("system_message: ", system_message)   
     
     def generate():
         try:
@@ -51,7 +60,7 @@ def chat():
 
     return Response(generate(), content_type='text/event-stream')
 
-@app.route('/image', methods=['POST'])
+@app.route('/api/image', methods=['POST'])
 def image():
     data = request.get_json()
     prompt = data.get('prompt')
