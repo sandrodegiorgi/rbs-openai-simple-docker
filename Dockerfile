@@ -3,10 +3,8 @@ FROM node:18-alpine as build-stage
 
 WORKDIR /app
 
-# Copy the package.json and package-lock.json to install dependencies
+# Copy and install Node.js dependencies
 COPY frontend/package.json frontend/package-lock.json ./
-
-# Install Node.js dependencies using npm
 RUN npm install
 
 # Copy the rest of the React app code and build it
@@ -25,8 +23,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy Flask backend code
 COPY backend/ ./
 
-# Copy React build to Flask's static folder
-COPY --from=build-stage /app/build ./static
+# Copy React build output directly to the correct `static` folder
+COPY --from=build-stage /app/build/. /app/
 
 # Expose the Flask port
 EXPOSE 5000
