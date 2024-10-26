@@ -11,8 +11,8 @@ import Home from './pages/Home/Home';
 import ChatForm from './pages/ChatForm/ChatForm';
 import ResponseDisplay from './pages/ResponseDisplay/ResponseDisplay';
 
-const SERVER_URL = 'http://127.0.0.1:5000';
-// const SERVER_URL = 'https://rbs-ai.degiorgi.de';
+// const SERVER_URL = 'http://127.0.0.1:5000';
+const SERVER_URL = 'https://rbs-ai.degiorgi.de';
 
 const packageJson = require('../package.json');
 
