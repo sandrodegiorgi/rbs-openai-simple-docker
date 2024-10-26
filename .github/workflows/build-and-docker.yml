@@ -53,7 +53,7 @@ jobs:
 
       # Step 8: Upload Artifact for Docker Job
       - name: Upload Backend and Build Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: flask-build
           path: ./backend
@@ -70,7 +70,7 @@ jobs:
 
       # Step 2: Download the build artifact (backend with React build)
       - name: Download Artifacts from Build Job
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: flask-build
 
