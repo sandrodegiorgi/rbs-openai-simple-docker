@@ -24,10 +24,22 @@ function App() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleChatSubmit = (e, assistantType) => {
+  const handleChatSubmit = async (e, assistantType) => {
     e.preventDefault();
     setWorking(true);
     setResponse('');
+
+    try {
+      await axios.get(`${SERVER_URL}/api/chat`, {
+        params: { prompt, assistant_type: assistantType, password }
+      });
+    } catch (err) {
+      if (err.response && (err.response.status === 401 || err.response.status === 415)) {
+        alert("Unauthorized access: Please check your password.");
+        setWorking(false);
+        return;
+      }
+    }
 
     const eventSource = new EventSource(
       `${SERVER_URL}/api/chat?prompt=${encodeURIComponent(prompt)}&assistant_type=${encodeURIComponent(assistantType)}&password=${encodeURIComponent(password)}`

@@ -24,7 +24,7 @@ This project is in an experimental phase and currently lacks:
 
 The purpose of this repository is to showcase the potential for AI-driven assistants in specific educational or informational contexts, providing insight into how such tools can be applied to real-world use cases.
 
-### License
+## License
 
 This project is licensed under the MIT License.
 
