@@ -11,6 +11,8 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 PASSWORD = os.getenv("PASSWORD")
 
+print(PASSWORD)
+
 # app = Flask(__name__, static_folder="static")
 app = Flask(__name__, static_folder=".")
 

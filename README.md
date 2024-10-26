@@ -1,7 +1,3 @@
-Here's the README with the footnote included as a final section, along with a mention of the MIT license.
-
----
-
 # rbs-openai-simple-docker
 
 This repository is an **experimental RBS-AI test bed** for web-service-like access to the OpenAI API. It serves as a simple proof of concept, demonstrating how assistants can support specific use cases, such as an assistant focused solely on encryption or other specialized topics. Additionally, it includes a tab for image generation.
@@ -28,12 +24,8 @@ This project is in an experimental phase and currently lacks:
 
 The purpose of this repository is to showcase the potential for AI-driven assistants in specific educational or informational contexts, providing insight into how such tools can be applied to real-world use cases.
 
----
-
 ### License
 
 This project is licensed under the MIT License.
-
----
 
 **Note**: This project was developed entirely voluntarily by the Schwarzwald Bitschubbser.
