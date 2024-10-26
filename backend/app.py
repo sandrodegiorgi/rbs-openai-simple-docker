@@ -3,7 +3,6 @@ from openai import OpenAI
 import os
 from dotenv import load_dotenv
 from flask_cors import CORS
-# import time
 from functools import wraps
 
 # Load environment variables
@@ -12,11 +11,9 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 PASSWORD = os.getenv("PASSWORD")
 
-# app = Flask(__name__)
 # app = Flask(__name__, static_folder="static")
 app = Flask(__name__, static_folder=".")
 
-# CORS(app)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 def load_system_message(assistant_type):
@@ -68,7 +65,7 @@ def chat():
             response = client.chat.completions.create(
                 model="gpt-4",
                 messages=[system_message, {"role": "user", "content": prompt}],
-                stream=True  # Enable streaming responses
+                stream=True
             )
             for chunk in response:
                 if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
