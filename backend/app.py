@@ -1,14 +1,16 @@
-from flask import Flask, request, Response, jsonify, send_from_directory
+from flask import Flask, request, Response, jsonify, send_from_directory, abort
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
 from flask_cors import CORS
-import time
+# import time
+from functools import wraps
 
 # Load environment variables
 load_dotenv()
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+PASSWORD = os.getenv("PASSWORD")
 
 # app = Flask(__name__)
 # app = Flask(__name__, static_folder="static")
@@ -25,6 +27,23 @@ def load_system_message(assistant_type):
     else:
         return "You are a helpful assistant."
 
+def check_password(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        password = request.args.get('password') or request.get_json().get('password')
+        if password != PASSWORD:
+            return jsonify({"error": "Unauthorized"}), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route('/app.py')
+def block_app_py():
+    abort(404)
+
+@app.route('/system_messages/<path:path>')
+def block_system_messages(path):
+    abort(404)
+
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve_react(path):
@@ -36,16 +55,14 @@ def serve_react(path):
         return send_from_directory(".", "index.html")
 
 @app.route('/api/chat', methods=['GET'])
+@check_password
 def chat():
     prompt = request.args.get('prompt')
     assistant_type = request.args.get('assistant_type', 'friendly')
-    # print("Assistant Type: ", assistant_type)
     
     system_message_content = load_system_message(assistant_type)
     system_message = {"role": "system", "content": system_message_content}
-    
-    # print("system_message: ", system_message)   
-    
+
     def generate():
         try:
             response = client.chat.completions.create(
@@ -65,6 +82,7 @@ def chat():
     return Response(generate(), content_type='text/event-stream')
 
 @app.route('/api/image', methods=['POST'])
+@check_password
 def image():
     data = request.get_json()
     prompt = data.get('prompt')
@@ -78,3 +96,5 @@ def image():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
+
+# pip freeze > requirements.txt
