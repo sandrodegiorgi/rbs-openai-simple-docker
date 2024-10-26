@@ -26,6 +26,9 @@ COPY backend/ ./
 # Copy React build output directly to the correct `static` folder
 COPY --from=build-stage /app/build/. /app/
 
+# Create an 'images' directory for storing downloaded images
+RUN mkdir -p /app/images
+
 # Expose the Flask port
 EXPOSE 5000
 

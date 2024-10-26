@@ -11,7 +11,7 @@ services:
     restart: unless-stopped
     pull_policy: always
     volumes:
-      - ./var/docker/data/rbs-openai/images:/app/images
+      - /var/docker/data/rbs-openai/images:/app/images
     networks:
       - proxy
 
