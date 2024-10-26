@@ -14,6 +14,8 @@ import ResponseDisplay from './pages/ResponseDisplay/ResponseDisplay';
 // const SERVER_URL = 'http://127.0.0.1:5000';
 const SERVER_URL = 'https://rbs-ai.degiorgi.de';
 
+const packageJson = require('../package.json');
+
 function App() {
   const [prompt, setPrompt] = useState('');
   const [response, setResponse] = useState('');
@@ -274,7 +276,14 @@ function App() {
           </Row>
         </Tab>
       </Tabs>
+      <div
+        className="position-fixed bottom-0 end-0 m-2 px-2 bg-dark text-white opacity-75 rounded"
+        style={{ fontSize: '12px', width: 'auto', textAlign: 'right' }}
+      >
+        Version: {packageJson.version}
+      </div>
     </Container>
+
   );
 }
 
