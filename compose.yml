@@ -1,6 +1,5 @@
 services:
   app:
-    # image: ghcr.io/sandrodegiorgi/rbs-openai-simple-docker:latest  # Your GHCR image
     image: "ghcr.io/sandrodegiorgi/rbs-openai-simple-docker/rbs-openai-simple-docker:latest"
     container_name: rbs-openai
     ports:
@@ -11,6 +10,8 @@ services:
       - PASSWORD=${PASSWORD}
     restart: unless-stopped
     pull_policy: always
+    volumes:
+      - ./var/docker/data/rbs-openai/images:/app/images
     networks:
       - proxy
 

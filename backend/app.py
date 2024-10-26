@@ -1,6 +1,8 @@
 from flask import Flask, request, Response, jsonify, send_from_directory, abort
 from openai import OpenAI
 import os
+import requests
+import uuid
 from dotenv import load_dotenv
 from flask_cors import CORS
 from functools import wraps
@@ -65,7 +67,7 @@ def chat():
     def generate():
         try:
             response = client.chat.completions.create(
-                model="gpt-4",
+                model="gpt-4o",
                 messages=[system_message, {"role": "user", "content": prompt}],
                 stream=True
             )
@@ -86,10 +88,53 @@ def image():
     data = request.get_json()
     prompt = data.get('prompt')
 
+    # works fine, think it's v2
+    # try:
+    #     response = client.images.generate(prompt=prompt, n=1, size="1024x1024")
+    #     image_url = response.data[0].url
+    #     return jsonify({'image_url': image_url})
+    # except Exception as e:
+    #     return jsonify({'error': str(e)}), 500
+
+    # works fine, think it's v3
+    # try:
+    #     response = client.images.generate(
+    #         model="dall-e-3",
+    #         prompt=prompt,
+    #         n=1,
+    #         # size="1024x1024",
+    #         quality="hd",   # "standard" or "hd"
+    #         style="vivid"       #  "vivid" or "natural"
+    #     )
+    #     image_url = response.data[0].url
+    #     return jsonify({'image_url': image_url})
+    # except Exception as e:
+    #     return jsonify({'error': str(e)}), 500
+
     try:
-        response = client.images.generate(prompt=prompt, n=1, size="1024x1024")
+        response = client.images.generate(
+            model="dall-e-3",
+            prompt=prompt,
+            n=1,
+            # size="1024x1024",
+            quality="hd",   # "standard" or "hd"
+            style="vivid"       #  "vivid" or "natural"
+        )
         image_url = response.data[0].url
-        return jsonify({'image_url': image_url})
+
+        image_response = requests.get(image_url)
+        if image_response.status_code == 200:
+            # Create a unique filename and save the image locally
+            
+            filename = f"{uuid.uuid4()}.png"
+            image_path = os.path.join("images", filename)
+            with open(image_path, "wb") as f:
+                f.write(image_response.content)
+
+            return jsonify({'image_url': f"/images/{filename}"})
+        else:
+            return jsonify({'error': 'Failed to download the image.'}), 500
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -97,3 +142,4 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
 
 # pip freeze > requirements.txt
+# pip list --format=freeze --not-required > requirements.txt
