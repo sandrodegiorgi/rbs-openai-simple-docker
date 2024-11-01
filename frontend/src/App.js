@@ -7,6 +7,7 @@ import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
 import axios from 'axios';
 
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import Home from './pages/Home/Home';
 import ChatForm from './pages/ChatForm/ChatForm';
@@ -151,7 +152,10 @@ function App() {
       <Container className="mt-3">
         <Row className="align-items-center justify-content-between">
           <Col md="auto">
-            <h1>RBS-AI Testing Bed</h1>
+            <h1>
+              
+              RBS-AI Testing Bed
+            </h1>
           </Col>
           <Col md="auto">
             <InputGroup>
@@ -263,7 +267,7 @@ function App() {
                     </Col>
                   </Row>
                 </Tab> */}
-                {/* <Tab eventKey="assistants" title="Assistants">
+                <Tab eventKey="assistants" title="Assistants">
                   <Row className="justify-content-md-center">
                     <Col xs={12}>
                       <AssistantsPage
@@ -272,7 +276,7 @@ function App() {
                       />
                     </Col>
                   </Row>
-                </Tab> */}
+                </Tab>
                 <Tab eventKey="translation" title="Translation">
                   <Row className="justify-content-md-center">
                     <Col xs={12}>
