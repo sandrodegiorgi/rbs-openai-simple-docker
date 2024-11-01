@@ -1,7 +1,6 @@
 import { FloatingLabel, Form, Button, Spinner } from 'react-bootstrap';
 
 const ChatForm = ({ SystemMessage, handleSubmit, prompt, setPrompt, flLabel, working }) => {
-    // console.log("SystemMessage:", SystemMessage);
 
     const onSubmit = (e) => {
         e.preventDefault();
@@ -25,11 +24,10 @@ const ChatForm = ({ SystemMessage, handleSubmit, prompt, setPrompt, flLabel, wor
                     disabled={working}
                 />
             </FloatingLabel>
-            {/* <Button type="submit" variant="primary">Send</Button> */}
             <Button
                 type="submit"
-                variant={working ? "secondary" : "primary"}  // Change color when working
-                disabled={working}  // Disable button when working
+                variant={working ? "secondary" : "primary"}
+                disabled={working}
             >
                 {working ? (
                     <>
@@ -40,7 +38,7 @@ const ChatForm = ({ SystemMessage, handleSubmit, prompt, setPrompt, flLabel, wor
                             role="status"
                             aria-hidden="true"
                         />{' '}
-                        Working ... Please stand by ... 
+                        Working ... Please stand by ...
                     </>
                 ) : (
                     "Send"

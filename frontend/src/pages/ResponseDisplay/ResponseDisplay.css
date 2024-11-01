@@ -1,0 +1,67 @@
+.response-container {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    white-space: pre-wrap; /* To ensure line breaks are preserved */
+  }
+  
+  .response-container h1 {
+    font-size: 2em;
+    margin-bottom: 0.5em;
+  }
+  
+  .response-container h2 {
+    font-size: 1.5em;
+    margin-bottom: 0.5em;
+  }
+  
+  .response-container h3 {
+    font-size: 1.2em;
+    margin-bottom: 0.5em;
+  }
+  
+  .response-container p {
+    margin-bottom: 1em;
+  }
+  
+  .response-container ul,
+  .response-container ol {
+    padding-left: 20px;
+    margin-bottom: 1em;
+  }
+  
+  .response-container li {
+    margin-bottom: 0.5em;
+  }
+  
+  .response-container code {
+    background-color: #f5f5f5;
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+  }
+  
+  .response-container pre {
+    background-color: #f5f5f5;
+    padding: 1em;
+    border-radius: 5px;
+    overflow-x: auto;
+    margin-bottom: 1em;
+  }
+  
+  .response-container table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1em;
+  }
+  
+  .response-container th,
+  .response-container td {
+    border: 1px solid #ddd;
+    padding: 8px;
+  }
+  
+  .response-container th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+  }
+  

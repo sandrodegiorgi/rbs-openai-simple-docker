@@ -37,11 +37,20 @@ function Home() {
         </Col>
       </Row>
 
-      <Row className="fade-in">
+      {/* <Row className="fade-in">
         <Col>
           <h3 className="section-title rainbow-text">Assistants</h3>
           <p>
             Our AI assistants are here to help you. Whether you need friendly advice or technical expertise, interact with specialized assistants for tailored responses.
+          </p>
+        </Col>
+      </Row> */}
+
+      <Row className="fade-in">
+        <Col>
+          <h3 className="section-title rainbow-text">Translation</h3>
+          <p>
+            Translate text between multiple languages with our AI-powered translation tool. Communicate effectively across language barriers.
           </p>
         </Col>
       </Row>

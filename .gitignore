@@ -6,6 +6,7 @@ frontend/build
 backend/__pycache__/
 backend/env/
 backend/venv/
+backend/assistants
 
 # Ignore any .env files (for security)
 *.env
