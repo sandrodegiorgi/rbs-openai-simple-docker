@@ -7,7 +7,7 @@ backend/__pycache__/
 backend/env/
 backend/venv/
 backend/assistants
-
+backend/system_messages
 # Ignore any .env files (for security)
 *.env
 

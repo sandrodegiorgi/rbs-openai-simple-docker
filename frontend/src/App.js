@@ -14,6 +14,7 @@ import ChatForm from './pages/ChatForm/ChatForm';
 import ResponseDisplay from './pages/ResponseDisplay/ResponseDisplay';
 import AssistantsPage from './pages/AssistantsPage/AssistantsPage';
 import AssistantsReloadPage from './pages/AssistantsReloadPage/AssistantsReloadPage';
+import TranslationChatForm from './pages/TranslationChatForm/TranslationChatForm';
 import { SERVER_URL } from './Consts';
 
 const packageJson = require('../package.json');
@@ -26,6 +27,7 @@ function App() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [refresh, setRefresh] = useState(false);
+  const [translationResult, setTranslationResult] = useState(null); 
 
   const reloadAssistants = async () => {
     try {
@@ -128,6 +130,27 @@ function App() {
 
   };
 
+  const handleTranslateSubmit = async (e, srcL, tarL) => {
+    e.preventDefault();
+    setWorking(true);
+    try {
+      const res = await axios.post(`${SERVER_URL}/api/translate`, {
+        prompt,
+        srcL, 
+        tarL,
+        password
+      });
+
+      setTranslationResult(res.data.translated_text);
+    } catch (err) {
+      console.error(err);
+      if (err.status === 401) {
+        alert("Unauthorized access: Please check your password.");
+      }
+    }
+    setWorking(false);
+  };
+
   const handleImageSubmit = async (e) => {
     e.preventDefault();
     setWorking(true);
@@ -153,7 +176,6 @@ function App() {
         <Row className="align-items-center justify-content-between">
           <Col md="auto">
             <h1>
-              
               RBS-AI Testing Bed
             </h1>
           </Col>
@@ -209,7 +231,6 @@ function App() {
                 <Tab eventKey="generalchat" title="General Chat">
                   <Row className="justify-content-md-center">
                     <Col xs={12}>
-
                       <ChatForm
                         SystemMessage="friendly"
                         handleSubmit={handleChatSubmit}
@@ -280,7 +301,14 @@ function App() {
                 <Tab eventKey="translation" title="Translation">
                   <Row className="justify-content-md-center">
                     <Col xs={12}>
-                      Work in progress...
+                      <TranslationChatForm
+                        handleTranslateSubmit={handleTranslateSubmit}
+                        working={working}
+                        setPrompt={setPrompt}
+                        flLabel={"Enter any text for Translation."}
+                        prompt={prompt}
+                        translatedText={translationResult}
+                      />
                     </Col>
                   </Row>
                 </Tab>

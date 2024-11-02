@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-function BackToAssistants () {
+function BackToAssistants() {
     return (
         <>
-            <Link to="/">Back to Assistants</Link>
+            <div className="mt-3">
+                <Link className="my-3" to="/">Back to Assistants</Link>
+            </div>
         </>
     );
 }

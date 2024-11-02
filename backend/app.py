@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 from functools import wraps
 
+from lingua import Language, LanguageDetectorBuilder
+
 # Load environment variables
 load_dotenv()
 
@@ -15,6 +17,7 @@ PASSWORD = os.getenv("PASSWORD")
 
 assistant_model = "gpt-4o"
 chat_model = "gpt-4o"
+translate_model = "gpt-3.5-turbo"
 
 assistants = {}
 
@@ -22,6 +25,8 @@ assistants = {}
 app = Flask(__name__, static_folder=".")
 
 CORS(app, resources={r"/*": {"origins": "*"}})
+
+detector = LanguageDetectorBuilder.from_all_languages().build()
 
 def check_password(f):
     @wraps(f)
@@ -171,6 +176,49 @@ def chat():
             yield f"data: [ERROR] {str(e)}\n\n"
 
     return Response(generate(), content_type='text/event-stream')
+
+@app.route('/api/translate', methods=['POST'])
+@check_password
+def translate():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid request"}), 400
+    
+    prompt = data.get('prompt')
+    src_language = data.get('srcL')
+    target_language = data.get('tarL')
+
+    detected_language = None
+    if src_language == "auto-detect":
+        detected_language = detector.detect_language_of(prompt)
+        if detected_language is None:
+            return jsonify({"error": "Sorry, source language not detectable."}), 400
+        else:
+            src_language = detected_language.name
+
+    try:
+        openai_prompt = f"Please translate the following text from {src_language} to {target_language}:\n\n{prompt}\n\nTranslation:"
+        response = client.chat.completions.create(
+            model=translate_model,
+            messages=[
+                {"role": "system", "content": "You are a highly skilled translation assistant."},
+                {"role": "user", "content": openai_prompt}
+            ],
+            stream=False,
+            max_tokens=200,
+            temperature=0.5
+        )
+        translated_text = response.choices[0].message.content.strip()
+
+        return jsonify({
+            'source_language': src_language,
+            'target_language': target_language,
+            'original_text': prompt,
+            'translated_text': translated_text
+            }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/image', methods=['POST'])
 @check_password
