@@ -66,9 +66,6 @@ def check_password_ass():
             if not assistant:
                 return jsonify({"error": "Assistant not found"}), 404
 
-            print(f"Password: {password}")
-            print(f"Assistant Password: {assistant['password']}")
-
             if password != assistant['password']:
                 return jsonify({"error": "Unauthorized"}), 401
 
