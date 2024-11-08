@@ -46,9 +46,6 @@ def check_password(required_password=None):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             password = request.args.get('password') or request.get_json().get('password')
-            print(password)
-            print(" against ")
-            print(required_password)
             if required_password is None:
                 if password != PASSWORD:
                     return jsonify({"error": "Unauthorized"}), 401
@@ -68,6 +65,9 @@ def check_password_ass():
 
             if not assistant:
                 return jsonify({"error": "Assistant not found"}), 404
+
+            print(f"Password: {password}")
+            print(f"Assistant Password: {assistant['password']}")
 
             if password != assistant['password']:
                 return jsonify({"error": "Unauthorized"}), 401
@@ -89,7 +89,7 @@ def load_assistants():
 
         if os.path.isfile(filepath):
             with open(filepath, 'r') as file:
-                print(f"Loading assistant: {filepath}")
+                # print(f"Loading assistant: {filepath}")
                 lines = file.readlines()
                 if len(lines) < 4:
                     continue
