@@ -14,6 +14,9 @@ load_dotenv()
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 PASSWORD = os.getenv("PASSWORD")
+PASSWORD_CHAT = os.getenv("PASSWORD_CHAT")
+PASSWORD_IMAGE = os.getenv("PASSWORD_IMAGE")
+PASSWORD_TRANSLATE = os.getenv("PASSWORD_TRANSLATE")
 
 assistant_model = "gpt-4o"
 chat_model = "gpt-4o"
@@ -28,21 +31,57 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 detector = LanguageDetectorBuilder.from_all_languages().build()
 
-def check_password(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        password = request.args.get('password') or request.get_json().get('password')
-        # print(password)
-        if password != PASSWORD:
-            return jsonify({"error": "Unauthorized"}), 401
-        return f(*args, **kwargs)
-    return decorated_function
+# def check_password(f):
+#     @wraps(f)
+#     def decorated_function(*args, **kwargs):
+#         password = request.args.get('password') or request.get_json().get('password')
+#         # print(password)
+#         if password != PASSWORD:
+#             return jsonify({"error": "Unauthorized"}), 401
+#         return f(*args, **kwargs)
+#     return decorated_function
+
+def check_password(required_password=None):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            password = request.args.get('password') or request.get_json().get('password')
+            if required_password is None:
+                if password != PASSWORD:
+                    return jsonify({"error": "Unauthorized"}), 401
+            else:
+                if password != required_password:
+                    return jsonify({"error": "Unauthorized"}), 401
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+def check_password_ass():
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(virtual_url, *args, **kwargs):
+            password = request.args.get('password') or request.get_json().get('password')
+            assistant = assistants.get(virtual_url)
+
+            if not assistant:
+                return jsonify({"error": "Assistant not found"}), 404
+
+            if password != assistant['password']:
+                return jsonify({"error": "Unauthorized"}), 401
+
+            return f(virtual_url, *args, **kwargs)
+        return decorated_function
+    return decorator
+
 
 def load_assistants():
     assistants_dir = 'assistants'
     assistants.clear()
     
     for filename in os.listdir(assistants_dir):
+        if not filename.startswith('ass_'):
+            continue
+        
         filepath = os.path.join(assistants_dir, filename)
 
         if os.path.isfile(filepath):
@@ -55,18 +94,20 @@ def load_assistants():
                 assistant_name = lines[0].strip()
                 prompt = lines[1].strip()
                 virtual_url = lines[2].strip()
-                system_message = "".join(lines[3:]).strip()
+                assistant_password = lines[3].strip()
+                system_message = "".join(lines[4:]).strip()
 
                 assistants[virtual_url] = {
                     'name': assistant_name,
                     'prompt': prompt,
-                    'system_message': system_message
+                    'system_message': system_message,
+                    'password': assistant_password
                 }
 
 load_assistants()
 
 @app.route('/api/assistants/reload', methods=['POST'])
-@check_password
+@check_password()
 def reload_assistants():
     load_assistants()
     return jsonify({"message": "Assistants reloaded successfully"}), 200
@@ -127,7 +168,7 @@ def serve_react(path):
 
 
 @app.route('/api/assistants/<virtual_url>/interact', methods=['GET'])
-@check_password
+@check_password_ass()
 def interact_with_assistant(virtual_url):
     prompt = request.args.get('prompt')
     system_message = {"role": "system", "content": assistants[virtual_url]['system_message']}
@@ -151,7 +192,7 @@ def interact_with_assistant(virtual_url):
     return Response(generate(), content_type='text/event-stream')
 
 @app.route('/api/chat', methods=['GET'])
-@check_password
+@check_password(PASSWORD_CHAT)
 def chat():
     prompt = request.args.get('prompt')
     assistant_type = request.args.get('assistant_type', 'friendly')
@@ -178,7 +219,7 @@ def chat():
     return Response(generate(), content_type='text/event-stream')
 
 @app.route('/api/translate', methods=['POST'])
-@check_password
+@check_password(PASSWORD_TRANSLATE)
 def translate():
     data = request.get_json()
     if not data:
@@ -221,7 +262,7 @@ def translate():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/image', methods=['POST'])
-@check_password
+@check_password(PASSWORD_IMAGE)
 def image():
     data = request.get_json()
     prompt = data.get('prompt')
