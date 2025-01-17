@@ -19,6 +19,8 @@ import { SERVER_URL } from './Consts';
 
 const packageJson = require('../package.json');
 
+const sessionUserId = crypto.randomUUID();
+
 function App() {
   const [prompt, setPrompt] = useState('');
   const [response, setResponse] = useState('');
@@ -27,7 +29,7 @@ function App() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [refresh, setRefresh] = useState(false);
-  const [translationResult, setTranslationResult] = useState(null); 
+  const [translationResult, setTranslationResult] = useState(null);
 
   const reloadAssistants = async () => {
     try {
@@ -48,13 +50,21 @@ function App() {
   }
 
   const handleAssistantSubmit = async (e, assistantId) => {
+    // console.log("Calling backend interact method", { assistantId });
+
     e.preventDefault();
+
+    // if (working) return;
+
     setWorking(true);
     setResponse('');
 
     try {
       await axios.get(`${SERVER_URL}/api/assistants/${assistantId}/interact`, {
-        params: { prompt, password }
+        params: { prompt, password },
+        headers: {
+          "X-User-ID": sessionUserId,
+        },
       });
     } catch (err) {
       if (err.response && (err.response.status === 401 || err.response.status === 415)) {
@@ -64,8 +74,14 @@ function App() {
       }
     }
 
+    // const eventSource = new EventSource(
+    //   `${SERVER_URL}/api/assistants/${assistantId}/interact?prompt=${encodeURIComponent(prompt)}&password=${encodeURIComponent(password)}`
+    // );
+
     const eventSource = new EventSource(
-      `${SERVER_URL}/api/assistants/${assistantId}/interact?prompt=${encodeURIComponent(prompt)}&password=${encodeURIComponent(password)}`
+      `${SERVER_URL}/api/assistants/${assistantId}/interact?prompt=${encodeURIComponent(
+        prompt
+      )}&password=${encodeURIComponent(password)}&user_id=${encodeURIComponent(sessionUserId)}&stream=true`
     );
 
     eventSource.onmessage = (event) => {
@@ -136,7 +152,7 @@ function App() {
     try {
       const res = await axios.post(`${SERVER_URL}/api/translate`, {
         prompt,
-        srcL, 
+        srcL,
         tarL,
         password
       });
@@ -318,7 +334,7 @@ function App() {
                       <Form onSubmit={handleImageSubmit}>
                         <FloatingLabel
                           controlId="floatingInput"
-                          label="Enter a prompt for Image Generation (like: Make an image of a cat playing guitar with a unicorn)"
+                          label="Enter a prompt for Image Generation (like: Make an image of a cat playing guitar with an unicorn)"
                           className="mb-3"
                         >
                           <Form.Control

@@ -1,8 +1,23 @@
+import { useState, useEffect } from 'react';
 import { FloatingLabel, Form, Button, Spinner } from 'react-bootstrap';
 import BackToAssistants from '../BackToAssistants/BackToAssistants';
 
 const AssistantChatForm = ({ assistantId, handleAssistantSubmit,
     prompt, setPrompt, flLabel, working }) => {
+
+    const [elapsedTime, setElapsedTime] = useState(0);
+
+    useEffect(() => {
+        let timer;
+        if (working) {
+            timer = setInterval(() => {
+                setElapsedTime((prev) => prev + 0.1);
+            }, 100);
+        } else {
+            setElapsedTime(0);
+        }
+        return () => clearInterval(timer);
+    }, [working]);
 
     const onSubmit = (e) => {
         e.preventDefault();
@@ -41,7 +56,7 @@ const AssistantChatForm = ({ assistantId, handleAssistantSubmit,
                                 role="status"
                                 aria-hidden="true"
                             />{' '}
-                            Working ... Please stand by ...
+                            Working ... Please stand by ... {elapsedTime.toFixed(1)}s
                         </>
                     ) : (
                         "Send"
