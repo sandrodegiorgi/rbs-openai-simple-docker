@@ -63,14 +63,14 @@ jobs:
     needs: build
 
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
       - name: Get version number from package.json
         id: get_version
         run: |
           VERSION=$(jq -r '.version' ./frontend/package.json)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-      - name: Checkout Code
-        uses: actions/checkout@v4
 
       - name: Download Artifacts from Build Job
         uses: actions/download-artifact@v4
