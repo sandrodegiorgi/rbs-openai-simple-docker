@@ -1,15 +1,21 @@
 import React, { useState } from 'react';
 import { FaRegClipboard, FaCheck } from 'react-icons/fa';
 import Card from 'react-bootstrap/Card';
+import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 
+import {
+    default_tooltip_show, default_tooltip_hide, tooltip_send_assistant, tooltip_copy_raw_response_to_clipboard
+} from './../../Consts';
+
 import './ResponseDisplay.css';
 
 const ResponseDisplay = ({ response }) => {
     const [copySuccess, setCopySuccess] = useState('');
+    const [rawCopySuccess, setRawCopySuccess] = useState(false);
 
     const copyToClipboard = () => {
         navigator.clipboard
@@ -21,6 +27,16 @@ const ResponseDisplay = ({ response }) => {
             .catch(() => setCopySuccess('Failed to copy!'));
     };
 
+    const copyRawToClipboard = () => {
+        navigator.clipboard.writeText(response).then(
+            () => {
+                setRawCopySuccess(true);
+                setTimeout(() => setRawCopySuccess(false), 2000); // Reset success indicator after 2 seconds
+            },
+            (err) => console.error("Failed to copy raw response!", err)
+        );
+    };
+
     return (
         response && (
             <>
@@ -28,8 +44,12 @@ const ResponseDisplay = ({ response }) => {
                     <Card.Header as="h3">Assistant's Response</Card.Header>
                     <Card.Body>
                         <Card.Text className="response-container">
-                            <button
-                                onClick={copyToClipboard}
+                            <OverlayTrigger
+                                placement="bottom-end"
+                                delay={{ show: default_tooltip_show, hide: default_tooltip_hide }}
+                                overlay={<Tooltip className="custom-tooltipper">{tooltip_copy_raw_response_to_clipboard}</Tooltip>}
+                            ><button
+                                onClick={copyRawToClipboard}
                                 style={{
                                     position: 'absolute',
                                     top: '8px',
@@ -38,22 +58,40 @@ const ResponseDisplay = ({ response }) => {
                                     border: 'none',
                                     cursor: 'pointer',
                                 }}
-                                title="Copy to Clipboard"
+                            // title="Copy HTML Markup to Clipboard"
                             >
-                                {copySuccess ? (
-                                    <FaCheck color="green" size={20} />
+                                    {rawCopySuccess ? (
+                                        <FaCheck color="green" size={20} />
+                                    ) : (
+                                        <FaRegClipboard size={20} />
+                                    )}
+                                </button>
+                            </OverlayTrigger>
+                            {/* <button
+                                onClick={copyRawToClipboard}
+                                style={{
+                                    position: 'absolute',
+                                    top: '8px',
+                                    right: '30px',
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                }}
+                                title="Copy Raw Response"
+                            >
+                                {rawCopySuccess ? (
+                                    <FaCheck color="blue" size={20} />
                                 ) : (
-                                    <FaRegClipboard size={20} />
+                                    <FaFileCode size={20} />
                                 )}
-                            </button>
-
+                            </button> */}
                             <ReactMarkdown
                                 children={response}
-                                remarkPlugins={[remarkGfm]}
+                                remarkPlugins={[remarkGfm, remarkBreaks]}
                                 rehypePlugins={[rehypeRaw]}
                                 skipHtml={false}
                             />
-
+                            {/* <code>{response}</code> */}
                             {/* <ReactMarkdown
                                 children={response}
                                 // remarkPlugins={[remarkGfm, remarkBreaks]}

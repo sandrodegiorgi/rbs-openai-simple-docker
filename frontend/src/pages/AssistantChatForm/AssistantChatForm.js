@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react';
-import { FloatingLabel, Form, Button, Spinner } from 'react-bootstrap';
+import { FloatingLabel, Form, Button, Spinner, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import {
+    default_tooltip_show, default_tooltip_hide, tooltip_send_assistant, 
+    label_send_assistant, label_send_prompt_working,
+    label_default
+} from './../../Consts';
 import BackToAssistants from '../BackToAssistants/BackToAssistants';
 
 const AssistantChatForm = ({ assistantId, handleAssistantSubmit,
@@ -35,33 +40,39 @@ const AssistantChatForm = ({ assistantId, handleAssistantSubmit,
                     <Form.Control
                         as="textarea"
                         type="text"
-                        placeholder="Make a song about unicorns..."
+                        placeholder={label_default}
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
                         style={{ height: '150px' }}
                         disabled={working}
                     />
                 </FloatingLabel>
-                <Button
-                    type="submit"
-                    variant={working ? "secondary" : "primary"}
-                    disabled={working}
+                <OverlayTrigger
+                    placement="bottom-end"
+                    delay={{ show: default_tooltip_show, hide: default_tooltip_hide }}
+                    overlay={<Tooltip className="custom-tooltipper">{tooltip_send_assistant}</Tooltip>}
                 >
-                    {working ? (
-                        <>
-                            <Spinner
-                                as="span"
-                                animation="border"
-                                size="sm"
-                                role="status"
-                                aria-hidden="true"
-                            />{' '}
-                            Working ... Please stand by ... {elapsedTime.toFixed(1)}s
-                        </>
-                    ) : (
-                        "Send"
-                    )}
-                </Button>
+                    <Button
+                        type="submit"
+                        variant={working ? "secondary" : "primary"}
+                        disabled={working}
+                    >
+                        {working ? (
+                            <>
+                                <Spinner
+                                    as="span"
+                                    animation="border"
+                                    size="sm"
+                                    role="status"
+                                    aria-hidden="true"
+                                />{' '}
+                                {label_send_prompt_working} - {elapsedTime.toFixed(1)}s
+                            </>
+                        ) : (
+                            label_send_assistant
+                        )}
+                    </Button>
+                </OverlayTrigger>
             </Form>
             {/* <BackToAssistants /> */}
         </>

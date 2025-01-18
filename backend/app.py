@@ -36,6 +36,8 @@ assistant_model = "gpt-4o"
 chat_model = "gpt-4o"
 translate_model = "gpt-3.5-turbo"
 
+chat_interaction_type = "general_chat"
+
 assistants = {}
 
 # app = Flask(__name__, static_folder="static")
@@ -47,7 +49,8 @@ app.secret_key = FLASK_SECRET_KEY
 #     f"mariadb+mariadbconnector://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@"
 #     f"{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
 # )
-print (DB_URI)
+# print (DB_URI)
+
 app.config['SQLALCHEMY_DATABASE_URI'] = DB_URI
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://user:password@0.0.0.0:3306/rbs-ai'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -60,7 +63,6 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 detector = LanguageDetectorBuilder.from_all_languages().build()
 
 def create_tables():
-    print ("Welcome to create_tables...", flush=True)
     with app.app_context():
         db.create_all()
         print("Checked and ensured all models/tables exist in the database.", flush=True)
@@ -111,7 +113,6 @@ def check_password_ass():
             return f(virtual_url, *args, **kwargs)
         return decorated_function
     return decorator
-
 
 def load_assistants():
     assistants_dir = 'assistants'
@@ -183,7 +184,7 @@ def load_system_message(assistant_type):
     else:
         return "You are a helpful assistant."
 
-@app.route('/app.py')
+@app.route('/app.py') # XXX: blocking models.py as well?
 def block_app_py():
     abort(404)
 
@@ -212,8 +213,6 @@ def log_request():
 @app.route('/api/assistants/<virtual_url>/interact', methods=['GET'])
 @check_password_ass()
 def interact_with_assistant(virtual_url):
-    print("i get called")
-    
     # Handle preflight CORS request
     if request.method == 'OPTIONS':
         return '', 204
@@ -224,21 +223,16 @@ def interact_with_assistant(virtual_url):
     system_message = assistants[virtual_url].get('system_message', "This is the default system message.")
     is_streaming = request.args.get('stream', 'false').lower() == 'true'
     
-    print(is_streaming)
-    
     app = current_app._get_current_object()
 
     if not is_streaming:
-        # Handle the initial non-streaming request
         print("Handling initial non-streaming request")
         with app.app_context():
-            # Fetch or initialize conversation history
             conversation_history = Interaction.query.filter_by(
                 user_id=user_id,
                 interaction_type=virtual_url
             ).order_by(Interaction.created_at).all()
 
-            # Add the system message if this is the first call
             if not conversation_history:
                 db.session.add(
                     Interaction(
@@ -257,14 +251,13 @@ def interact_with_assistant(virtual_url):
     def generate():
         with app.app_context():
             try:
-                # Fetch the user's conversation history
                 conversation_history = Interaction.query.filter_by(
                     user_id=user_id,
                     interaction_type=virtual_url
                 ).order_by(Interaction.created_at).all()
 
-                # Convert conversation history to OpenAI's message format
-                messages = [{"role": interaction.role, "content": interaction.content} for interaction in conversation_history]
+                messages = [{"role": interaction.role, "content": interaction.content} 
+                            for interaction in conversation_history]
 
                 # Add the system message if this is the first call
                 if not messages:
@@ -281,6 +274,7 @@ def interact_with_assistant(virtual_url):
 
                 # Add the user's new message
                 messages.append({"role": "user", "content": prompt})
+                
                 db.session.add(
                     Interaction(
                         user_id=user_id,
@@ -305,7 +299,11 @@ def interact_with_assistant(virtual_url):
                     if hasattr(chunk.choices[0].delta, "content") and chunk.choices[0].delta.content:
                         chunk_message = chunk.choices[0].delta.content
                         assistant_reply += chunk_message
+                        # print(f"[{chunk_message}]")
+                        # print(f"Chunk content: [{repr(chunk_message)}]")
+                        chunk_message = chunk_message.replace("\n", "[NEWLINE]")
                         yield f"data: {chunk_message}\n\n"
+                yield f"data: [DONE]\n\n"
 
                 # Save the assistant's response to the database
                 db.session.add(
@@ -332,122 +330,117 @@ def interact_with_assistant(virtual_url):
         }
     )
 
-# def interact_with_assistant(virtual_url):
-#     print("i get called")
-#     prompt = request.args.get('prompt')
-    
-#     # user_id = request.headers.get('X-User-ID', 'anonymous')
-#     # user_id = get_or_create_user_id()
-#     user_id = request.headers.get("X-User-ID") or request.args.get("user_id")
-    
-#     system_message = assistants[virtual_url].get('system_message', "This is the default system message.")
-
-#     app = current_app._get_current_object()
-
-#     def generate():
-#         with app.app_context():
-#             try:
-#                 # Fetch the user's conversation from the database
-#                 conversation_history = Interaction.query.filter_by(
-#                     user_id=user_id,
-#                     interaction_type=virtual_url
-#                 ).order_by(Interaction.created_at).all()
-
-#                 # Convert conversation history to OpenAI's message format
-#                 messages = [{"role": interaction.role, "content": interaction.content} for interaction in conversation_history]
-                
-#                 # Add the system message if this is the first call
-#                 if not messages:
-#                     messages.append({"role": "system", "content": system_message})
-#                     db.session.add(
-#                         Interaction(
-#                             user_id=user_id,
-#                             interaction_type=virtual_url,
-#                             role="system",
-#                             content=system_message,
-#                             model=assistant_model,
-#                         )
-#                     )
-                    
-#                 # Add the user's new message
-#                 messages.append({"role": "user", "content": prompt})
-#                 db.session.add(
-#                     Interaction(
-#                         user_id=user_id, 
-#                         interaction_type=virtual_url, 
-#                         role="user", 
-#                         content=prompt,
-#                         model=assistant_model
-#                         )
-#                     )
-#                 db.session.commit()
-
-#                 # Stream the response from OpenAI
-#                 response = client.chat.completions.create(
-#                     model=assistant_model,
-#                     messages=messages,
-#                     stream=True
-#                 )
-
-#                 assistant_reply = ""
-
-#                 for chunk in response:
-#                     if hasattr(chunk.choices[0].delta, "content") and chunk.choices[0].delta.content:
-#                         chunk_message = chunk.choices[0].delta.content
-#                         assistant_reply += chunk_message
-#                         yield f"data: {chunk_message}\n\n"
-
-#                 # Save the assistant's response to the database
-#                 db.session.add(
-#                     Interaction(
-#                         user_id=user_id, 
-#                         interaction_type=virtual_url, 
-#                         role="assistant", 
-#                         content=assistant_reply,
-#                         model=assistant_model
-#                         )
-#                     )
-#                 db.session.commit()
-
-#             except Exception as e:
-#                 yield f"data: [ERROR] {str(e)}\n\n"
-
-#     return Response(
-#         generate(),
-#         content_type="text/event-stream",
-#         headers={
-#             "X-Accel-Buffering": "no",
-#             "Cache-Control": "no-cache",
-#         }
-#     )
-    
 @app.route('/api/chat', methods=['GET'])
 @check_password(PASSWORD_CHAT)
 def chat():
     prompt = request.args.get('prompt')
-    assistant_type = request.args.get('assistant_type', 'friendly')
+    user_id = request.headers.get("X-User-ID") or request.args.get("user_id")
+    system_message = "You are a helpful assistant." # XXX
+    is_streaming = request.args.get('stream', 'false').lower() == 'true'
+    local_model = chat_model
+    local_interaction_type = chat_interaction_type
+
+    app = current_app._get_current_object()
+
+    if not is_streaming:
+        print("Handling initial non-streaming request (CHAT)")
+        with app.app_context():
+            conversation_history = Interaction.query.filter_by(
+                user_id=user_id,
+                interaction_type=local_interaction_type
+            ).order_by(Interaction.created_at).all()
+
+            if not conversation_history:
+                db.session.add(
+                    Interaction(
+                        user_id=user_id,
+                        interaction_type=local_interaction_type,
+                        role="system",
+                        content=system_message,
+                        model=local_model,
+                    )
+                )
+                db.session.commit()
+
+        return jsonify({"status": "ok", "message": "Initial request received"})
     
-    system_message_content = load_system_message(assistant_type)
-    system_message = {"role": "system", "content": system_message_content}
-
     def generate():
-        try:
-            response = client.chat.completions.create(
-                model=chat_model,
-                messages=[system_message, {"role": "user", "content": prompt}],
-                stream=True
-            )
-            for chunk in response:
-                if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
-                    chunk_message = chunk.choices[0].delta.content    
-                    if chunk_message:
-                        print (chunk_message)
+        with app.app_context():
+            try:
+                conversation_history = Interaction.query.filter_by(
+                    user_id=user_id,
+                    interaction_type=local_interaction_type
+                ).order_by(Interaction.created_at).all()
+                
+                messages = [{"role": interaction.role, "content": interaction.content} 
+                            for interaction in conversation_history]    
+                
+                if not messages:
+                    messages.append({"role": "system", "content": system_message})
+                    db.session.add(
+                         Interaction(
+                            user_id=user_id,
+                            interaction_type=local_interaction_type,
+                            role="system",
+                            content=system_message,
+                            model=local_model,
+                        )
+                    )
+                    
+                messages.append({"role": "user", "content": prompt})
+            
+                db.session.add(
+                    Interaction(
+                        user_id=user_id,
+                        interaction_type=local_interaction_type,
+                        role="user",
+                        content=prompt,
+                        model=local_model,
+                    )
+                )
+                db.session.commit()
+                
+                response = client.chat.completions.create(
+                    model=local_model,
+                    messages=messages,
+                    stream=True
+                )
+            
+                assistant_reply = ""
+            
+            
+                for chunk in response:
+                    if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
+                        chunk_message = chunk.choices[0].delta.content
+                        chunk_message = chunk_message.replace("\n", "[NEWLINE]")
+                        assistant_reply += chunk_message
                         yield f"data: {chunk_message}\n\n"
-        except Exception as e:
-            print(f"Error: {str(e)}")
-            yield f"data: [ERROR] {str(e)}\n\n"
+                yield f"data: [DONE]\n\n"
+            
+                db.session.add(
+                    Interaction(
+                        user_id=user_id,
+                        interaction_type=local_interaction_type,
+                        role="assistant",
+                        content=assistant_reply,
+                        model=local_model,
+                    )
+                )
+                db.session.commit()
+            
+            except Exception as e:
+                print(f"Error: {str(e)}")
+                yield f"data: [ERROR] {str(e)}\n\n"
 
-    return Response(generate(), content_type='text/event-stream')
+    print("Handling streaming request (CHAT)")
+    return Response(
+        generate(),
+        content_type="text/event-stream",
+        headers={
+            "X-Accel-Buffering": "no",
+            "Cache-Control": "no-cache",
+        }
+    )
 
 @app.route('/api/translate', methods=['POST'])
 @check_password(PASSWORD_TRANSLATE)
@@ -498,29 +491,6 @@ def image():
     data = request.get_json()
     prompt = data.get('prompt')
 
-    # works fine, think it's v2
-    # try:
-    #     response = client.images.generate(prompt=prompt, n=1, size="1024x1024")
-    #     image_url = response.data[0].url
-    #     return jsonify({'image_url': image_url})
-    # except Exception as e:
-    #     return jsonify({'error': str(e)}), 500
-
-    # works fine, think it's v3
-    # try:
-    #     response = client.images.generate(
-    #         model="dall-e-3",
-    #         prompt=prompt,
-    #         n=1,
-    #         # size="1024x1024",
-    #         quality="hd",   # "standard" or "hd"
-    #         style="vivid"       #  "vivid" or "natural"
-    #     )
-    #     image_url = response.data[0].url
-    #     return jsonify({'image_url': image_url})
-    # except Exception as e:
-    #     return jsonify({'error': str(e)}), 500
-
     try:
         response = client.images.generate(
             model="dall-e-3",
@@ -547,7 +517,7 @@ def image():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    print("hello from starting flask...", flush=True)
+    # print("hello from starting flask...", flush=True)
     create_tables()
     app.run(host='0.0.0.0', port=5000)
 

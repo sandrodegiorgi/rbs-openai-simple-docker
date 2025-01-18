@@ -1,8 +1,31 @@
-// export const SERVER_URL = 'http://127.0.0.1:5000';
-export const SERVER_URL = 'https://rbs-ai.degiorgi.de';
+const packageJson = require('../package.json');
+
+export const SERVER_URL = 'http://127.0.0.1:5000';
+// export const SERVER_URL = 'https://rbs-ai.degiorgi.de';
 
 export const ASSISTANT_URL = "/api/assistants";
 export const INTERACT_EPILOGUE = "/interact";
+
+export const headline_available_assistants = "Available Assistants";
+
+export const label_default = "Make a song about unicorns...";
+export const label_enter_password = "Bitte geben Sie - JE nach Anwendung - das entsprechende Passwort ein";
+export const label_show_hide_password = "Ihr eingegebenes Passwort anzeigen bzw. verbergen";
+export const label_send_assistant = "Prompt senden";
+export const label_send_general_chat = label_send_assistant;
+export const label_general_chat = "Willkommen beim 'allgemeinen Chat' - lassen Sie uns sprechen!";
+export const label_send_prompt_working = "Anfrage in Bearbeitung! Bitte etwas Geduld...";
+
+// export const tooltip_send_assitant = "Prüfen Sie auf korrektes Passwort und klicken Sie dann hier, um die Nachricht abzusenden.";
+export const tooltip_version = "You are currently working with version " + packageJson.version + ". For any questions or issues, please contact Siggi Sternenstaub directly.";
+export const tooltip_send_assistant = "Klicken Sie hier, um Ihren Prompt abzusenden.";
+export const tooltip_send_general_chat = tooltip_send_assistant;
+export const tooltip_copy_raw_response_to_clipboard = "Klicken Sie hier, um das Ergebnis in die Zwischenablage zu kopieren.";
+
+export const system_message_unauthorized = "Der Server hat Ihre Anfrage abgelehnt. Bitte überprüfen Sie Ihr eingegebenes Passwort und versuchen Sie es erneut.";
+
+export const default_tooltip_show = 150;
+export const default_tooltip_hide = 100;
 
 export const LANGUAGES = [
     { value: 'auto-detect', label: 'auto-detect' },

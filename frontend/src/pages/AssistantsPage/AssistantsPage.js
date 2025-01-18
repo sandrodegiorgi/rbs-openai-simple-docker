@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Row, Col } from 'react-bootstrap';
 
-import { SERVER_URL, ASSISTANT_URL, INTERACT_EPILOGUE } from '../../Consts';
+import { SERVER_URL, ASSISTANT_URL, headline_available_assistants } from '../../Consts';
 import AssistantChatForm from '../AssistantChatForm/AssistantChatForm';
 import ResponseDisplay from '../ResponseDisplay/ResponseDisplay';
 import BackToAssistants from '../BackToAssistants/BackToAssistants';
@@ -75,7 +75,7 @@ function AssistantsPage({ handleAssistantSubmit, prompt, setPrompt, working, res
                         assistantId={assistantId}
                     />
                     <ResponseDisplay response={response} />
-                    <BackToAssistants />
+                    {/* <BackToAssistants /> */}
                 </Col>
             </Row>
         );
@@ -85,7 +85,7 @@ function AssistantsPage({ handleAssistantSubmit, prompt, setPrompt, working, res
         <Row className="justify-content-md-center mt-3">
             <Col xs={12}>
 
-                <h2>Available Assistants:</h2>
+                <h2>{headline_available_assistants}:</h2>
                 <ul>
                     {/* {console.log(assistants)} */}
                     {assistants.map((assistant, index) => (

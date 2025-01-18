@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Button, Container, Row, Col, Tabs, Tab, InputGroup,
-  Form, FloatingLabel, Spinner, Image, Card
+  Form, FloatingLabel, Spinner, Image, Card,
+  OverlayTrigger, Tooltip
 } from 'react-bootstrap';
 import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
 import axios from 'axios';
@@ -15,7 +16,13 @@ import ResponseDisplay from './pages/ResponseDisplay/ResponseDisplay';
 import AssistantsPage from './pages/AssistantsPage/AssistantsPage';
 import AssistantsReloadPage from './pages/AssistantsReloadPage/AssistantsReloadPage';
 import TranslationChatForm from './pages/TranslationChatForm/TranslationChatForm';
-import { SERVER_URL } from './Consts';
+import {
+  SERVER_URL, default_tooltip_show, default_tooltip_hide,
+  label_enter_password, label_show_hide_password,
+  tooltip_version,
+  system_message_unauthorized,
+  label_general_chat
+} from './Consts';
 
 const packageJson = require('../package.json');
 
@@ -26,10 +33,19 @@ function App() {
   const [response, setResponse] = useState('');
   const [imageURL, setImageURL] = useState('');
   const [working, setWorking] = useState('');
+  const [isComplete, setIsComplete] = useState(false);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [refresh, setRefresh] = useState(false);
   const [translationResult, setTranslationResult] = useState(null);
+
+  useEffect(() => {
+    if (isComplete) {
+      console.log("Response streaming completed!");
+      // console.log(response)
+      // setResponse("aetsch")
+    }
+  }, [isComplete]);
 
   const reloadAssistants = async () => {
     try {
@@ -44,20 +60,17 @@ function App() {
 
     } catch (err) {
       if (err.status === 401) {
-        alert("Unauthorized access: Please check your password.");
+        alert(system_message_unauthorized);
       }
     }
   }
 
   const handleAssistantSubmit = async (e, assistantId) => {
-    // console.log("Calling backend interact method", { assistantId });
-
     e.preventDefault();
-
-    // if (working) return;
 
     setWorking(true);
     setResponse('');
+    setIsComplete(false);
 
     try {
       await axios.get(`${SERVER_URL}/api/assistants/${assistantId}/interact`, {
@@ -68,15 +81,12 @@ function App() {
       });
     } catch (err) {
       if (err.response && (err.response.status === 401 || err.response.status === 415)) {
-        alert("Unauthorized access: Please check your password.");
+        alert(system_message_unauthorized);
         setWorking(false);
+        setIsComplete(true);
         return;
       }
     }
-
-    // const eventSource = new EventSource(
-    //   `${SERVER_URL}/api/assistants/${assistantId}/interact?prompt=${encodeURIComponent(prompt)}&password=${encodeURIComponent(password)}`
-    // );
 
     const eventSource = new EventSource(
       `${SERVER_URL}/api/assistants/${assistantId}/interact?prompt=${encodeURIComponent(
@@ -85,12 +95,22 @@ function App() {
     );
 
     eventSource.onmessage = (event) => {
+      // analyzeCharacterTypes(event.data);
+      // console.log("Received chunk:", JSON.stringify(event.data));
       if (event.data === "Unauthorized") {
-        alert("Unauthorized access: Please check your password.");
+        alert(system_message_unauthorized);
         eventSource.close();
         setWorking(false);
-      } else {
-        setResponse((prevResponse) => prevResponse + event.data);
+        setIsComplete(true);
+      }
+      else if (event.data === "[DONE]") {
+        eventSource.close();
+        setWorking(false);
+        setIsComplete(true);
+      }
+      else {
+        const formattedChunk = event.data.replace(/\[NEWLINE\]/g, '\n');
+        setResponse((prevResponse) => prevResponse + formattedChunk);
       }
     };
 
@@ -98,40 +118,90 @@ function App() {
       console.error("Error in streaming response:", err);
       eventSource.close();
       setWorking(false);
+      setIsComplete(true);
       if (err.status === 401) {
-        alert("Unauthorized access: Please check your password.");
+        alert(system_message_unauthorized);
       }
     };
   };
 
+  const analyzeCharacterTypes = (data) => {
+    if (!data) {
+      console.log("No data to analyze.");
+      return;
+    }
+
+    console.log(`Analyzing data: "${data}"`);
+
+    data.split('').forEach((char, index) => {
+      let charType;
+
+      if (char === '\n') {
+        charType = 'Line Feed (\\n)';
+      } else if (char === '\t') {
+        charType = 'Tab (\\t)';
+      } else if (/\d/.test(char)) {
+        charType = 'Digit';
+      } else if (/[a-zA-Z]/.test(char)) {
+        charType = 'Character';
+      } else if (/\s/.test(char)) {
+        charType = 'Whitespace';
+      } else {
+        charType = 'Symbol';
+      }
+
+      // Get the numeric value (ASCII or Unicode)
+      const charCode = char.charCodeAt(0);
+
+      console.log(`Index: ${index}, Char: "${char}", Numeric Value: ${charCode}, Type: ${charType}`);
+    });
+  };
+
   const handleChatSubmit = async (e, assistantType) => {
     e.preventDefault();
+
     setWorking(true);
     setResponse('');
+    setIsComplete(false);
 
     try {
       await axios.get(`${SERVER_URL}/api/chat`, {
-        params: { prompt, assistant_type: assistantType, password }
+        params: { prompt, assistant_type: assistantType, password }, headers: {
+          "X-User-ID": sessionUserId,
+        },
       });
     } catch (err) {
       if (err.response && (err.response.status === 401 || err.response.status === 415)) {
-        alert("Unauthorized access: Please check your password.");
+        alert(system_message_unauthorized);
         setWorking(false);
+        setIsComplete(true);
         return;
       }
     }
 
+    // const eventSource = new EventSource(
+    //   `${SERVER_URL}/api/chat?prompt=${encodeURIComponent(prompt)}&assistant_type=${encodeURIComponent(assistantType)}&password=${encodeURIComponent(password)}&stream=true`
+    // );
+
     const eventSource = new EventSource(
-      `${SERVER_URL}/api/chat?prompt=${encodeURIComponent(prompt)}&assistant_type=${encodeURIComponent(assistantType)}&password=${encodeURIComponent(password)}`
+      `${SERVER_URL}/api/chat?prompt=${encodeURIComponent(prompt)}&password=${encodeURIComponent(password)}&user_id=${encodeURIComponent(sessionUserId)}&stream=true`
     );
 
     eventSource.onmessage = (event) => {
       if (event.data === "Unauthorized") {
-        alert("Unauthorized access: Please check your password.");
+        alert(system_message_unauthorized);
         eventSource.close();
         setWorking(false);
-      } else {
-        setResponse((prevResponse) => prevResponse + event.data);
+        setIsComplete(true);
+      }
+      else if (event.data === "[DONE]") {
+        eventSource.close();
+        setWorking(false);
+        setIsComplete(true);
+      }
+      else {
+        const formattedChunk = event.data.replace(/\[NEWLINE\]/g, '\n');
+        setResponse((prevResponse) => prevResponse + formattedChunk);
       }
     };
 
@@ -139,8 +209,9 @@ function App() {
       console.error("Error in streaming response:", err);
       eventSource.close();
       setWorking(false);
+      setIsComplete(true);
       if (err.status === 401) {
-        alert("Unauthorized access: Please check your password.");
+        alert(system_message_unauthorized);
       }
     };
 
@@ -161,7 +232,7 @@ function App() {
     } catch (err) {
       console.error(err);
       if (err.status === 401) {
-        alert("Unauthorized access: Please check your password.");
+        alert(system_message_unauthorized);
       }
     }
     setWorking(false);
@@ -180,7 +251,7 @@ function App() {
     } catch (err) {
       console.error(err);
       if (err.status === 401) {
-        alert("Unauthorized access: Please check your password.");
+        alert(system_message_unauthorized);
       }
     }
     setWorking(false);
@@ -202,19 +273,29 @@ function App() {
                 label="Enter Password"
                 className="flex-grow-1"
               >
-                <Form.Control
-                  type={showPassword ? "text" : "password"} // Toggle type
-                  placeholder="Enter Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
+                <OverlayTrigger
+                  placement="bottom"
+                  delay={{ show: default_tooltip_show, hide: default_tooltip_hide }}
+                  overlay={<Tooltip className="custom-tooltipper">{label_enter_password}</Tooltip>}
+                ><Form.Control
+                    type={showPassword ? "text" : "password"} // Toggle type
+                    placeholder="Enter Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </OverlayTrigger>
               </FloatingLabel>
-              <Button
+              <OverlayTrigger
+                placement="bottom-end"
+                delay={{ show: default_tooltip_show, hide: default_tooltip_hide }}
+                overlay={<Tooltip className="custom-tooltipper">{label_show_hide_password}</Tooltip>}
+              ><Button
                 variant="outline-secondary"
                 onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
-              </Button>
+                  {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
+                </Button>
+              </OverlayTrigger>
             </InputGroup>
           </Col>
           <Col md="auto" className="text-end">
@@ -252,7 +333,7 @@ function App() {
                         handleSubmit={handleChatSubmit}
                         prompt={prompt}
                         setPrompt={setPrompt}
-                        flLabel={"Enter any prompt for Chat. This is an 'openBot' assistant."}
+                        flLabel={label_general_chat}
                         working={working}
                       />
                       <ResponseDisplay response={response} />
@@ -398,12 +479,17 @@ function App() {
           </Routes>
         </Router>
 
-        <div
+        <OverlayTrigger
+          placement="top-start"
+          delay={{ show: default_tooltip_show, hide: default_tooltip_hide }}
+          overlay={<Tooltip className="custom-tooltipper">{tooltip_version}</Tooltip>}
+        ><div
           className="position-fixed bottom-0 end-0 m-2 px-2 bg-dark text-white opacity-75 rounded"
           style={{ fontSize: '12px', width: 'auto', textAlign: 'right' }}
         >
-          Version: {packageJson.version}
-        </div>
+            Version: {packageJson.version}
+          </div>
+        </OverlayTrigger>
       </Container>
     </>
   );

@@ -1,4 +1,9 @@
-import { FloatingLabel, Form, Button, Spinner } from 'react-bootstrap';
+import { FloatingLabel, Form, Button, Spinner, OverlayTrigger, Tooltip } from 'react-bootstrap';
+
+import {
+    default_tooltip_show, default_tooltip_hide, tooltip_send_assistant, 
+    label_send_general_chat, label_send_prompt_working
+} from './../../Consts';
 
 const ChatForm = ({ SystemMessage, handleSubmit, prompt, setPrompt, flLabel, working }) => {
 
@@ -24,26 +29,31 @@ const ChatForm = ({ SystemMessage, handleSubmit, prompt, setPrompt, flLabel, wor
                     disabled={working}
                 />
             </FloatingLabel>
-            <Button
+            <OverlayTrigger
+                placement="bottom-end"
+                delay={{ show: default_tooltip_show, hide: default_tooltip_hide }}
+                overlay={<Tooltip className="custom-tooltipper">{tooltip_send_assistant}</Tooltip>}
+            ><Button
                 type="submit"
                 variant={working ? "secondary" : "primary"}
                 disabled={working}
             >
-                {working ? (
-                    <>
-                        <Spinner
-                            as="span"
-                            animation="border"
-                            size="sm"
-                            role="status"
-                            aria-hidden="true"
-                        />{' '}
-                        Working ... Please stand by ...
-                    </>
-                ) : (
-                    "Send"
-                )}
-            </Button>
+                    {working ? (
+                        <>
+                            <Spinner
+                                as="span"
+                                animation="border"
+                                size="sm"
+                                role="status"
+                                aria-hidden="true"
+                            />{' '}
+                            {label_send_prompt_working}
+                        </>
+                    ) : (
+                        label_send_general_chat
+                    )}
+                </Button>
+            </OverlayTrigger>
         </Form>
     );
 };
