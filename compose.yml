@@ -24,32 +24,38 @@ services:
       - /opt/docker/data/rbs-openai/assistants:/app/assistants
     networks:
       - proxy
+      - rbs-ai-net
 
   db:
     image: mariadb:latest
-    container_name: mariadb
+    container_name: mariadb-rbs
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
-      MYSQL_DATABASE: rbs-ai
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
     ports:
       - "3306:3306"
     volumes:
       - /opt/docker/data/rbs-openai/db:/var/lib/mysql
 #       - /opt/docker/data/Useris/sandrodegiorgi/Documents/mariadb/data:/var/lib/mysql
     networks:
-      - proxy
+      - rbs-ai-net
 
   phpmyadmin:
     image: phpmyadmin:latest
-    container_name: phpmyadmin
-    # restart: always
+    container_name: phpmyadmin-rbs
     ports:
       - 8080:80
+    networks:
+      - rbs-ai-net
+      - proxy
     environment:
       - PMA_ARBITRARY=1
 
 networks:
   proxy:
     external: true
+  rbs-ai-net:
+    driver: bridge
+    name: rbs-ai-net

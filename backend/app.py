@@ -60,6 +60,11 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 detector = LanguageDetectorBuilder.from_all_languages().build()
 
+def create_tables():
+    with app.app_context():
+        db.create_all()
+        print("Checked and ensured all models/tables exist in the database.")
+
 def get_or_create_user_id():
     if "user_id" not in session:
         session["user_id"] = str(uuid.uuid4())
@@ -542,6 +547,7 @@ def image():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
+    create_tables()
     app.run(host='0.0.0.0', port=5000)
 
 # pip freeze > requirements.txt
