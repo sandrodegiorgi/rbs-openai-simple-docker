@@ -26,10 +26,11 @@ PASSWORD_TRANSLATE = os.getenv("PASSWORD_TRANSLATE")
 FLASK_SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "fallback-dev-secret")
 
 DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_USER_PASSWORD")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT")
 DB_NAME = os.getenv("DB_NAME")
+DB_URI = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 assistant_model = "gpt-4o"
 chat_model = "gpt-4o"
@@ -46,7 +47,9 @@ app.secret_key = FLASK_SECRET_KEY
 #     f"mariadb+mariadbconnector://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@"
 #     f"{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
 # )
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://user:password@0.0.0.0:3306/rbs-ai'
+print (DB_URI)
+app.config['SQLALCHEMY_DATABASE_URI'] = DB_URI
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://user:password@0.0.0.0:3306/rbs-ai'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # db = SQLAlchemy(app)
 
