@@ -1,6 +1,6 @@
 from flask import Flask
 from flask import request, Response, jsonify, send_from_directory, abort, session, current_app
-from flask_sqlalchemy import SQLAlchemy
+# from flask_sqlalchemy import SQLAlchemy
 
 from models import db, Interaction
 
@@ -546,5 +546,6 @@ if __name__ == '__main__':
 
 # pip freeze > requirements.txt
 # pip list --format=freeze --not-required > requirements.txt
+# pip list --format=freeze > requirements.txt
 
 # FLASK_APP=app.py flask run
