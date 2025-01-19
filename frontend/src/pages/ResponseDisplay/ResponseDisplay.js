@@ -14,6 +14,7 @@ import {
 import './ResponseDisplay.css';
 
 const ResponseDisplay = ({ response, string_headline }) => {
+
     const [copySuccess, setCopySuccess] = useState('');
     const [rawCopySuccess, setRawCopySuccess] = useState(false);
 
