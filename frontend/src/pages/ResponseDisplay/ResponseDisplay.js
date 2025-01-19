@@ -13,7 +13,7 @@ import {
 
 import './ResponseDisplay.css';
 
-const ResponseDisplay = ({ response }) => {
+const ResponseDisplay = ({ response, string_headline }) => {
     const [copySuccess, setCopySuccess] = useState('');
     const [rawCopySuccess, setRawCopySuccess] = useState(false);
 
@@ -31,7 +31,7 @@ const ResponseDisplay = ({ response }) => {
         navigator.clipboard.writeText(response).then(
             () => {
                 setRawCopySuccess(true);
-                setTimeout(() => setRawCopySuccess(false), 2000); // Reset success indicator after 2 seconds
+                setTimeout(() => setRawCopySuccess(false), 2000);
             },
             (err) => console.error("Failed to copy raw response!", err)
         );
@@ -41,7 +41,7 @@ const ResponseDisplay = ({ response }) => {
         response && (
             <>
                 <Card className="my-3">
-                    <Card.Header as="h3">Assistant's Response</Card.Header>
+                    <Card.Header as="h3">{string_headline}</Card.Header>
                     <Card.Body>
                         <Card.Text className="response-container">
                             <OverlayTrigger

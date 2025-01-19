@@ -19,9 +19,12 @@ import TranslationChatForm from './pages/TranslationChatForm/TranslationChatForm
 import {
   SERVER_URL, default_tooltip_show, default_tooltip_hide,
   label_enter_password, label_show_hide_password,
-  tooltip_version,
-  system_message_unauthorized,
-  label_general_chat
+  label_general_chat, label_send_image_generation,
+  label_send_prompt_working,
+  tooltip_version, tooltip_send_image_generation,
+  system_message_unauthorized, system_missing_data,
+  system_missing_dl_image, system_message_error,
+  interaction_type_chat
 } from './Consts';
 
 const packageJson = require('../package.json');
@@ -38,6 +41,8 @@ function App() {
   const [showPassword, setShowPassword] = useState(false);
   const [refresh, setRefresh] = useState(false);
   const [translationResult, setTranslationResult] = useState(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [interactions, setInteractions] = useState([]);
 
   useEffect(() => {
     if (isComplete) {
@@ -46,6 +51,39 @@ function App() {
       // setResponse("aetsch")
     }
   }, [isComplete]);
+
+  useEffect(() => {
+    let timer;
+    if (working) {
+      console.log("Timer started.");
+      timer = setInterval(() => {
+        setElapsedTime((prev) => prev + 0.1);
+      }, 100);
+    } else {
+      setElapsedTime(0);
+    }
+    return () => clearInterval(timer);
+  }, [working]);
+
+  const handleFetchInteractions = async () => {
+    try {
+      const response = await axios.get(`${SERVER_URL}/api/interactions`, {
+        params: {
+          user_id: sessionUserId,
+          interaction_type: interaction_type_chat,
+        },
+      });
+
+      console.log("Fetched interactions:", response.data);
+      setInteractions(response.data);
+    } catch (err) {
+      if (err.response) {
+        console.error("Error fetching interactions:", err.response);
+      } else {
+        console.error("Error fetching interactions:", err.message);
+      }
+    }
+  };
 
   const reloadAssistants = async () => {
     try {
@@ -220,19 +258,26 @@ function App() {
   const handleTranslateSubmit = async (e, srcL, tarL) => {
     e.preventDefault();
     setWorking(true);
-    try {
-      const res = await axios.post(`${SERVER_URL}/api/translate`, {
-        prompt,
-        srcL,
-        tarL,
-        password
-      });
 
-      setTranslationResult(res.data.translated_text);
+    try {
+      const res = await axios.post(`${SERVER_URL}/api/translate`,
+        { prompt, srcL, tarL, password },
+        {
+          headers: {
+            "X-User-ID": sessionUserId,
+          },
+        }
+      );
+
+      // setTranslationResult(res.data.translated_text);
+      setTranslationResult(res.data);
     } catch (err) {
       console.error(err);
       if (err.status === 401) {
         alert(system_message_unauthorized);
+      }
+      else {
+        alert(system_message_error); // XXX: This should be more specific
       }
     }
     setWorking(false);
@@ -241,17 +286,30 @@ function App() {
   const handleImageSubmit = async (e) => {
     e.preventDefault();
     setWorking(true);
+
     try {
-      const res = await axios.post(`${SERVER_URL}/api/image`, {
-        prompt,
-        password
-      });
+      const res = await axios.post(`${SERVER_URL}/api/image`,
+        { prompt, password },
+        {
+          headers: {
+            "X-User-ID": sessionUserId,
+          },
+          // params: { // Query parameters in the URL
+          //   someQueryParam: "value",
+          // },
+        }
+      );
 
       setImageURL(res.data.image_url);
     } catch (err) {
-      console.error(err);
       if (err.status === 401) {
         alert(system_message_unauthorized);
+      }
+      else if (err.status === 400) {
+        alert(system_missing_data);
+      }
+      else if (err.status === 500) {
+        alert(system_missing_dl_image);
       }
     }
     setWorking(false);
@@ -335,8 +393,13 @@ function App() {
                         setPrompt={setPrompt}
                         flLabel={label_general_chat}
                         working={working}
+                        interactions={interactions}
+                        handleCallBackFetchInteractions={handleFetchInteractions}
                       />
-                      <ResponseDisplay response={response} />
+                      <ResponseDisplay
+                        response={response}
+                        string_headline="Chat Response"
+                      />
                     </Col>
                   </Row>
                 </Tab>
@@ -405,6 +468,7 @@ function App() {
                         flLabel={"Enter any text for Translation."}
                         prompt={prompt}
                         translatedText={translationResult}
+                        resultData={translationResult}
                       />
                     </Col>
                   </Row>
@@ -428,32 +492,44 @@ function App() {
                             disabled={working}
                           />
                         </FloatingLabel>
-                        <Button
-                          type="submit"
-                          variant={working ? "secondary" : "primary"}
-                          disabled={working}
+                        <OverlayTrigger
+                          placement="bottom"
+                          delay={{ show: default_tooltip_show, hide: default_tooltip_hide }}
+                          overlay={<Tooltip className="custom-tooltipper">{tooltip_send_image_generation}</Tooltip>}
                         >
-                          {working ? (
-                            <>
-                              <Spinner
-                                as="span"
-                                animation="border"
-                                size="sm"
-                                role="status"
-                                aria-hidden="true"
-                              />{' '}
-                              Working ... Please stand by ...
-                            </>
-                          ) : (
-                            "Send"
-                          )}
-                        </Button>
+                          <Button
+                            type="submit"
+                            variant={working ? "secondary" : "primary"}
+                            disabled={working}
+                          >
+                            {working ? (
+                              <>
+                                <Spinner
+                                  as="span"
+                                  animation="border"
+                                  size="sm"
+                                  role="status"
+                                  aria-hidden="true"
+                                />{' '}
+                                {label_send_prompt_working}  - {elapsedTime.toFixed(1)}s
+                              </>
+                            ) : (
+                              label_send_image_generation
+                            )}
+                          </Button>
+                        </OverlayTrigger>
                       </Form>
 
                       {imageURL && <Card className="my-3">
                         <Card.Header as="h3">Generated Image</Card.Header>
                         <Card.Body>
-                          <Card.Text><img src={imageURL} alt="Generated" /></Card.Text>
+                          <Card.Text>
+                            <img
+                              src={imageURL}
+                              alt={`Generated: ${prompt}`}
+                              title={`Generated: ${prompt}`}
+                            />
+                          </Card.Text>
                         </Card.Body>
                       </Card>}
                     </Col>

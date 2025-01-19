@@ -1,10 +1,12 @@
 const packageJson = require('../package.json');
 
-// export const SERVER_URL = 'http://127.0.0.1:5000';
-export const SERVER_URL = 'https://rbs-ai.degiorgi.de';
+export const SERVER_URL = 'http://127.0.0.1:5000';
+// export const SERVER_URL = 'https://rbs-ai.degiorgi.de';
 
 export const ASSISTANT_URL = "/api/assistants";
 export const INTERACT_EPILOGUE = "/interact";
+
+export const interaction_type_chat = "general_chat";
 
 export const headline_available_assistants = "Available Assistants";
 
@@ -13,16 +15,32 @@ export const label_enter_password = "Bitte geben Sie - JE nach Anwendung - das e
 export const label_show_hide_password = "Ihr eingegebenes Passwort anzeigen bzw. verbergen";
 export const label_send_assistant = "Prompt senden";
 export const label_send_general_chat = label_send_assistant;
+export const label_send_image_generation = "Bild generieren";
 export const label_general_chat = "Willkommen beim 'allgemeinen Chat' - lassen Sie uns sprechen!";
 export const label_send_prompt_working = "Anfrage in Bearbeitung! Bitte etwas Geduld...";
+export const label_reload_assistants = "Assistenten neu laden";
+export const label_reload_assistants_confirm = "Ja, neu laden";
+export const label_reload_assistants_cancel = "Abbrechen";
+export const label_send_translate = "Übersetzen";
 
 // export const tooltip_send_assitant = "Prüfen Sie auf korrektes Passwort und klicken Sie dann hier, um die Nachricht abzusenden.";
 export const tooltip_version = "You are currently working with version " + packageJson.version + ". For any questions or issues, please contact Siggi Sternenstaub directly.";
 export const tooltip_send_assistant = "Klicken Sie hier, um Ihren Prompt abzusenden.";
 export const tooltip_send_general_chat = tooltip_send_assistant;
 export const tooltip_copy_raw_response_to_clipboard = "Klicken Sie hier, um das Ergebnis in die Zwischenablage zu kopieren.";
+export const tooltip_send_image_generation = "Klicken Sie hier, um das Bild generieren zu lassen (ETA 30s).";
+export const tooltip_reload_assistants = "Klicken Sie hier, um die Assistenten neu zu laden. Wenn neue Assistenten erstellt oder bestehende verändert wurden, kann es bis zu fünf Minuten dauern, bis hier die Anpassungen neu geladen werden können.";
+export const tooltip_copy_assistant_link_to_clipboard = "in die Zwischenablage kopieren.";
+export const tooltip_translate_source_language = "Wählen Sie die Sprache, in der Ihr Text geschrieben ist.";
+export const tooltip_translate_target_language = "Wählen Sie die Sprache, in die Ihr Text übersetzt werden soll.";
+export const tooltip_send_translate = "Klicken Sie hier, um den Text zu übersetzen.";
 
 export const system_message_unauthorized = "Der Server hat Ihre Anfrage abgelehnt. Bitte überprüfen Sie Ihr eingegebenes Passwort und versuchen Sie es erneut.";
+export const system_missing_data = "Der Server hat Ihre Anfrage abgelehnt. Es fehlen notwendige Daten in Ihrer Anfrage.";
+export const system_missing_dl_image = "Es ist leider ein Fehler aufgetreten. Das Bild kann nicht dargestellt werden :/";
+export const system_message_error = "Es ist leider ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.";
+
+export const text_reload_assistants_are_you_sure = "Sind Sie sicher, dass Sie die Assistenten neu laden möchten?";
 
 export const default_tooltip_show = 150;
 export const default_tooltip_hide = 100;

@@ -1,8 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Row, Col } from 'react-bootstrap';
+import { Row, Col, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { FaRegClipboard, FaCheck } from 'react-icons/fa';
 
-import { SERVER_URL, ASSISTANT_URL, headline_available_assistants } from '../../Consts';
+import {
+    SERVER_URL, ASSISTANT_URL,
+    headline_available_assistants, tooltip_copy_assistant_link_to_clipboard,
+    default_tooltip_show, default_tooltip_hide
+} from '../../Consts';
+
 import AssistantChatForm from '../AssistantChatForm/AssistantChatForm';
 import ResponseDisplay from '../ResponseDisplay/ResponseDisplay';
 import BackToAssistants from '../BackToAssistants/BackToAssistants';
@@ -16,6 +22,15 @@ function AssistantsPage({ handleAssistantSubmit, prompt, setPrompt, working, res
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const { assistantId } = useParams();
+    const [copiedIndex, setCopiedIndex] = useState(null); // Track which assistant was copied
+
+    const copyToClipboard = (url, index) => {
+        const deeplink = `${window.location.origin}/assistants/${url}`;
+        navigator.clipboard.writeText(deeplink).then(() => {
+            setCopiedIndex(index);
+            setTimeout(() => setCopiedIndex(null), 2000);
+        });
+    };
 
     useEffect(() => {
         if (assistantId) {
@@ -74,7 +89,10 @@ function AssistantsPage({ handleAssistantSubmit, prompt, setPrompt, working, res
                         working={working}
                         assistantId={assistantId}
                     />
-                    <ResponseDisplay response={response} />
+                    <ResponseDisplay
+                        response={response}
+                        string_headline={"Assistant reply: " + specificAssistant.name}
+                    />
                     {/* <BackToAssistants /> */}
                 </Col>
             </Row>
@@ -91,6 +109,28 @@ function AssistantsPage({ handleAssistantSubmit, prompt, setPrompt, working, res
                     {assistants.map((assistant, index) => (
                         <li key={index}>
                             <Link to={`/assistants/${assistant.url}`} className="fw-bold">{assistant.name}</Link>
+                            <OverlayTrigger
+                                placement="bottom-end"
+                                delay={{ show: default_tooltip_show, hide: default_tooltip_hide }}
+                                overlay={<Tooltip className="custom-tooltipper">'{assistant.name} {tooltip_copy_assistant_link_to_clipboard}</Tooltip>}
+                            >
+                                <button
+                                    onClick={() => copyToClipboard(assistant.url, index)}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        marginLeft: '10px',
+                                    }}
+                                // title="Copy Deeplink"
+                                >
+                                    {copiedIndex === index ? (
+                                        <FaCheck color="green" size={16} />
+                                    ) : (
+                                        <FaRegClipboard size={16} />
+                                    )}
+                                </button>
+                            </OverlayTrigger>
                             <p>{assistant.prompt}</p>
                         </li>
                     ))}
