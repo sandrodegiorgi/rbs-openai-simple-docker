@@ -150,7 +150,7 @@ function TranslationForm({ prompt, setPrompt, response, working,
                                         role="status"
                                         aria-hidden="true"
                                     />{' '}
-                                    {label_send_prompt_working}  - {elapsedTime.toFixed(1)}s
+                                    {label_send_prompt_working} - {elapsedTime.toFixed(1)}s
                                 </>
                             ) : (
                                 label_send_translate

@@ -9,9 +9,12 @@ import {
     label_send_general_chat, label_send_prompt_working,
     interaction_type_chat
 } from './../../Consts';
+import InteractionsDisplay from '../InteractionsDisplay/InteractionsDisplay';
 
 const ChatForm = ({ SystemMessage, handleSubmit, prompt, setPrompt,
     flLabel, working, handleCallBackFetchInteractions, interactions }) => {
+
+    const [elapsedTime, setElapsedTime] = useState(0);
 
     useEffect(() => {
         if (!working) {
@@ -21,51 +24,25 @@ const ChatForm = ({ SystemMessage, handleSubmit, prompt, setPrompt,
         }
     }, [working]);
 
+    useEffect(() => {
+        let timer;
+        if (working) {
+            timer = setInterval(() => {
+                setElapsedTime((prev) => prev + 0.1);
+            }, 100);
+        } else {
+            setElapsedTime(0);
+        }
+        return () => clearInterval(timer);
+    }, [working]);
+
     const onSubmit = (e) => {
         e.preventDefault();
         handleSubmit(e, SystemMessage);
     };
     return (
         <>
-            {interactions
-                .filter((interaction) => interaction.role !== "system") // Omit "system" role
-                .map((interaction, index) => (
-                    <Card
-                        key={index}
-                        className="my-3"
-                        style={{
-                            width: "80%",
-                            marginLeft: interaction.role === "assistant" ? "0" : "auto",
-                            marginRight: interaction.role === "assistant" ? "auto" : "0",
-                            border: interaction.role === "user" ? "1px solid black" : "1px solid #e0e0e0",
-                        }}
-                    >
-                        <Card.Body style={{ position: "relative" }}>
-                            <div
-                                style={{
-                                    position: "absolute",
-                                    top: "0",
-                                    right: "0",
-                                    fontSize: "0.7rem",
-                                    color: "grey",
-                                    padding: "5px",
-                                }}
-                            >
-                                {interaction.created_at} - {interaction.model} - {interaction.role}
-                            </div>
-
-                            {/* Content */}
-                            <ReactMarkdown
-                                children={interaction.content}
-                                remarkPlugins={[remarkGfm, remarkBreaks]}
-                                rehypePlugins={[rehypeRaw]}
-                                skipHtml={false}
-                            />
-                        </Card.Body>
-                    </Card>
-                ))}
-
-
+            <InteractionsDisplay interactions={interactions} />
 
             <Form onSubmit={onSubmit}>
                 <FloatingLabel
@@ -83,6 +60,7 @@ const ChatForm = ({ SystemMessage, handleSubmit, prompt, setPrompt,
                         disabled={working}
                     />
                 </FloatingLabel>
+
                 <OverlayTrigger
                     placement="bottom-end"
                     delay={{ show: default_tooltip_show, hide: default_tooltip_hide }}
@@ -102,7 +80,7 @@ const ChatForm = ({ SystemMessage, handleSubmit, prompt, setPrompt,
                                     role="status"
                                     aria-hidden="true"
                                 />{' '}
-                                {label_send_prompt_working}
+                                {label_send_prompt_working} - {elapsedTime.toFixed(1)}s
                             </>
                         ) : (
                             label_send_general_chat

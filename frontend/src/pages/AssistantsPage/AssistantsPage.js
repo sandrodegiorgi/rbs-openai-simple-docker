@@ -15,7 +15,7 @@ import BackToAssistants from '../BackToAssistants/BackToAssistants';
 import AssistantsReloadPage from '../AssistantsReloadPage/AssistantsReloadPage';
 
 function AssistantsPage({ handleAssistantSubmit, prompt, setPrompt, working, response,
-    reloadAssistants, refresh
+    reloadAssistants, refresh, interactions, handleCallBackFetchInteractions
 }) {
     const [assistants, setAssistants] = useState([]);
     const [specificAssistant, setSpecificAssistant] = useState(null);
@@ -88,6 +88,8 @@ function AssistantsPage({ handleAssistantSubmit, prompt, setPrompt, working, res
                         flLabel={specificAssistant.prompt}
                         working={working}
                         assistantId={assistantId}
+                        interactions={interactions}
+                        handleCallBackFetchInteractions={handleCallBackFetchInteractions}
                     />
                     <ResponseDisplay
                         response={response}

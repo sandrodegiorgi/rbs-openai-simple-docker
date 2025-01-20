@@ -65,12 +65,16 @@ function App() {
     return () => clearInterval(timer);
   }, [working]);
 
-  const handleFetchInteractions = async () => {
+
+  const handleFetchInteractions = async (assistantId = interaction_type_chat) => {
+    const fetch_interaction_type = assistantId;
+    console.log("Fetching interactions for:", fetch_interaction_type);
+
     try {
       const response = await axios.get(`${SERVER_URL}/api/interactions`, {
         params: {
           user_id: sessionUserId,
-          interaction_type: interaction_type_chat,
+          interaction_type: fetch_interaction_type,
         },
       });
 
@@ -551,6 +555,8 @@ function App() {
                 setPrompt={setPrompt}
                 working={working}
                 response={response}
+                interactions={interactions}
+                handleCallBackFetchInteractions={handleFetchInteractions}
               />} />
           </Routes>
         </Router>

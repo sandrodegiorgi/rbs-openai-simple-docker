@@ -1,16 +1,24 @@
 import { useState, useEffect } from 'react';
 import { FloatingLabel, Form, Button, Spinner, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import {
-    default_tooltip_show, default_tooltip_hide, tooltip_send_assistant, 
+    default_tooltip_show, default_tooltip_hide, tooltip_send_assistant,
     label_send_assistant, label_send_prompt_working,
     label_default
 } from './../../Consts';
 import BackToAssistants from '../BackToAssistants/BackToAssistants';
+import InteractionsDisplay from '../InteractionsDisplay/InteractionsDisplay';
 
 const AssistantChatForm = ({ assistantId, handleAssistantSubmit,
-    prompt, setPrompt, flLabel, working }) => {
+    prompt, setPrompt, flLabel, working, interactions, handleCallBackFetchInteractions }) => {
 
     const [elapsedTime, setElapsedTime] = useState(0);
+
+    useEffect(() => {
+        if (!working) {
+            console.log("should call get all interactions for assistantId: ", assistantId)
+            handleCallBackFetchInteractions(assistantId);
+        }
+    }, [working]);
 
     useEffect(() => {
         let timer;
@@ -31,6 +39,8 @@ const AssistantChatForm = ({ assistantId, handleAssistantSubmit,
 
     return (
         <>
+            <InteractionsDisplay interactions={interactions} />
+
             <Form onSubmit={onSubmit}>
                 <FloatingLabel
                     controlId={`floatingInput_${flLabel}`}
