@@ -1,15 +1,13 @@
 import { FloatingLabel, Form, Button, Spinner, OverlayTrigger, Tooltip, Card } from 'react-bootstrap';
 import { useState, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
-import rehypeRaw from 'rehype-raw';
-import remarkGfm from 'remark-gfm';
-import remarkBreaks from 'remark-breaks';
 import {
     default_tooltip_show, default_tooltip_hide, tooltip_send_assistant,
     label_send_general_chat, label_send_prompt_working,
     interaction_type_chat
 } from './../../Consts';
 import InteractionsDisplay from '../InteractionsDisplay/InteractionsDisplay';
+import "./ChatForm.css";
+
 
 const ChatForm = ({ SystemMessage, handleSubmit, prompt, setPrompt,
     flLabel, working, handleCallBackFetchInteractions, interactions }) => {

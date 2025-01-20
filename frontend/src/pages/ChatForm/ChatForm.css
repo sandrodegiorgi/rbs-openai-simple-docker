@@ -1,0 +1,21 @@
+/* Full-screen container for chat */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Full viewport height */
+}
+
+/* Scrollable container for interactions */
+.interactions-container {
+    flex: 1; /* Fills remaining space above the form */
+    overflow-y: auto; /* Enables vertical scrolling */
+    padding: 1rem;
+    background-color: #f9f9f9; /* Optional background color */
+}
+
+/* Chat form container fixed at the bottom */
+.chat-form-container {
+    padding: 1rem;
+    background-color: white;
+    border-top: 1px solid #ddd; /* Optional border for separation */
+}
