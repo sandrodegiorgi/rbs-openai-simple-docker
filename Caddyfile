@@ -1,0 +1,13 @@
+rbs-ai.degiorgi.de {
+    log { 
+        output file /logs/rbs-ai_access.log {
+            roll_size 100mb
+            compress gzip
+        }
+        format json
+        level info
+    }
+
+    reverse_proxy /api/* rbs-openai:5000
+    reverse_proxy * rbs-openai:80
+}

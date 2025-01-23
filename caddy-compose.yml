@@ -1,0 +1,23 @@
+services:
+  caddy:
+    image: caddy:2.8.4-alpine
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - /opt/docker/data/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - /opt/docker/data/caddy/site:/srv
+      - /opt/docker/data/caddy/data:/data
+      - /opt/docker/data/caddy/logs:/logs
+#      - /opt/logs/html:/logs
+      - /opt/docker/data/caddy/config:/config
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    name: proxy
