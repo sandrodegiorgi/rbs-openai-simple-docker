@@ -30,7 +30,7 @@ COPY backend/ ./
 
 # Copy React build output directly to the correct `static` folder
 # COPY --from=build-stage /app/build/. /app/  XXXXXXXXX
-COPY --from=build-stage /app/build /var/www/html
+COPY --from=build-stage /app/build/. /var/www/html/
 
 # Create an 'images' directory for storing downloaded images
 RUN mkdir -p /app/images
