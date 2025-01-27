@@ -11,11 +11,15 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
 import Home from './pages/Home/Home';
+import NotFound from './pages/NotFound/NotFound';
 import ChatForm from './pages/ChatForm/ChatForm';
 import ResponseDisplay from './pages/ResponseDisplay/ResponseDisplay';
+import AssistantsLab from './pages/AssistantsLab/AssistantsLab';
 import AssistantsPage from './pages/AssistantsPage/AssistantsPage';
 import AssistantsReloadPage from './pages/AssistantsReloadPage/AssistantsReloadPage';
 import TranslationChatForm from './pages/TranslationChatForm/TranslationChatForm';
+import ImageCreation from './pages/ImageCreation/ImageCreation';
+
 import {
   SERVER_URL, default_tooltip_show, default_tooltip_hide,
   label_enter_password, label_show_hide_password,
@@ -24,7 +28,8 @@ import {
   tooltip_version, tooltip_send_image_generation,
   system_message_unauthorized, system_missing_data,
   system_missing_dl_image, system_message_error,
-  interaction_type_chat
+  interaction_type_chat,
+  headline_main
 } from './Consts';
 
 const packageJson = require('../package.json');
@@ -67,7 +72,12 @@ function App() {
 
 
   const handleFetchInteractions = async (assistantId = interaction_type_chat) => {
-    const fetch_interaction_type = assistantId;
+    let fetch_interaction_type = assistantId;
+
+    if (assistantId === "lab") {
+      fetch_interaction_type = "assistants_lab-" + sessionUserId;
+    }
+
     console.log("Fetching interactions for:", fetch_interaction_type);
 
     try {
@@ -259,6 +269,69 @@ function App() {
 
   };
 
+  const handleAssistantsLabSubmit = async (e, systemMessage, assistantPrompt) => {
+    const assistantType = "assistants_lab";
+
+    e.preventDefault();
+
+    setWorking(true);
+    setResponse('');
+    setIsComplete(false);
+
+    try {
+      await axios.get(`${SERVER_URL}/api/assistants_lab`, {
+        params: {
+          system_message: systemMessage,
+          assistant_prompt: assistantPrompt,
+          assistant_type: assistantType,
+          password: password
+        },
+        headers: {
+          "X-User-ID": sessionUserId,
+        },
+      });
+    } catch (err) {
+      if (err.response && (err.response.status === 401 || err.response.status === 415)) {
+        alert(system_message_unauthorized);
+        setWorking(false);
+        setIsComplete(true);
+        return;
+      }
+    }
+
+    const eventSource = new EventSource(
+      `${SERVER_URL}/api/assistants_lab?system_message=${encodeURIComponent(systemMessage)}&assistant_prompt=${encodeURIComponent(assistantPrompt)}&assistant_type=${encodeURIComponent(assistantType)}&password=${encodeURIComponent(password)}&user_id=${encodeURIComponent(sessionUserId)}&stream=true`
+    );
+
+    eventSource.onmessage = (event) => {
+      if (event.data === "Unauthorized") {
+        alert(system_message_unauthorized);
+        eventSource.close();
+        setWorking(false);
+        setIsComplete(true);
+      }
+      else if (event.data === "[DONE]") {
+        eventSource.close();
+        setWorking(false);
+        setIsComplete(true);
+      }
+      else {
+        const formattedChunk = event.data.replace(/\[NEWLINE\]/g, '\n');
+        setResponse((prevResponse) => prevResponse + formattedChunk);
+      }
+    };
+
+    eventSource.onerror = (err) => {
+      console.error("Error in streaming response:", err);
+      eventSource.close();
+      setWorking(false);
+      setIsComplete(true);
+      if (err.status === 401) {
+        alert(system_message_unauthorized);
+      }
+    };
+  };
+
   const handleTranslateSubmit = async (e, srcL, tarL) => {
     e.preventDefault();
     setWorking(true);
@@ -273,7 +346,6 @@ function App() {
         }
       );
 
-      // setTranslationResult(res.data.translated_text);
       setTranslationResult(res.data);
     } catch (err) {
       console.error(err);
@@ -324,9 +396,7 @@ function App() {
       <Container className="mt-3">
         <Row className="align-items-center justify-content-between">
           <Col md="auto">
-            <h1>
-              RBS-AI Testing Bed
-            </h1>
+            <h2>{headline_main}</h2>
           </Col>
           <Col md="auto">
             <InputGroup>
@@ -364,15 +434,16 @@ function App() {
             <Image
               src={`${process.env.PUBLIC_URL}/rbs.png`}
               alt="Rolf-Benz-Schule Logo"
-              className="mb-1"
+              className="mb-1 img-rbs-logo"
               fluid
             />
           </Col>
         </Row>
         <hr />
+
         <Router>
           <Routes>
-            <Route path="/" element={
+            {/* <Route path="/" element={
               <Tabs
                 defaultActiveKey="home"
                 id="fill-tab-example"
@@ -399,59 +470,13 @@ function App() {
                         working={working}
                         interactions={interactions}
                         handleCallBackFetchInteractions={handleFetchInteractions}
-                      />
-                      <ResponseDisplay
                         response={response}
                         string_headline="Chat Response"
                       />
                     </Col>
                   </Row>
                 </Tab>
-                {/* <Tab eventKey="a_vierfelder" title="A: Vierfeldertafel">
-                  <Row className="justify-content-md-center">
-                    <Col xs={12}>
-                      <ChatForm
-                        SystemMessage="a_vierfelder"
-                        handleSubmit={handleChatSubmit}
-                        prompt={prompt}
-                        setPrompt={setPrompt}
-                        flLabel={"Enter any prompt that has to do with stochastics or the four-field table."}
-                        working={working}
-                      />
-                      <ResponseDisplay response={response} />
-                    </Col>
-                  </Row>
-                </Tab> */}
-                {/* <Tab eventKey="a_trommelbremse" title="A: Trommelbremse">
-                  <Row className="justify-content-md-center">
-                    <Col xs={12}>
-                      <ChatForm
-                        SystemMessage="a_trommelbremse"
-                        handleSubmit={handleChatSubmit}
-                        prompt={prompt}
-                        setPrompt={setPrompt}
-                        flLabel={"Enter any prompt that has to do with braking technology or the drum brake."}
-                        working={working}
-                      />
-                      <ResponseDisplay response={response} />
-                    </Col>
-                  </Row>
-                </Tab> */}
-                {/* <Tab eventKey="a_verschluesselung" title="A: Verschlüsselung">
-                  <Row className="justify-content-md-center">
-                    <Col xs={12}>
-                      <ChatForm
-                        SystemMessage="a_verschluesselung"
-                        handleSubmit={handleChatSubmit}
-                        prompt={prompt}
-                        setPrompt={setPrompt}
-                        flLabel={"Enter any prompt that has to do with encryption and encryption methods."}
-                        working={working}
-                      />
-                      <ResponseDisplay response={response} />
-                    </Col>
-                  </Row>
-                </Tab> */}
+
                 <Tab eventKey="assistants" title="Assistants">
                   <Row className="justify-content-md-center">
                     <Col xs={12}>
@@ -462,6 +487,20 @@ function App() {
                     </Col>
                   </Row>
                 </Tab>
+
+                <Tab eventKey="assistants-lab" title="Assistants-Lab">
+                  <Row className="justify-content-md-center">
+                    <Col xs={12}>
+                      <AssistantsLab
+                        handleAssitantsLabSubmit={handleAssistantsLabSubmit}
+                        handleCallBackFetchInteractions={handleFetchInteractions}
+                        interactions={interactions}
+                        working={working}
+                      />
+                    </Col>
+                  </Row>
+                </Tab>
+
                 <Tab eventKey="translation" title="Translation">
                   <Row className="justify-content-md-center">
                     <Col xs={12}>
@@ -477,6 +516,7 @@ function App() {
                     </Col>
                   </Row>
                 </Tab>
+
                 <Tab eventKey="imagecreation" title="Image Creation">
                   <Row className="justify-content-md-center">
                     <Col xs={12}>
@@ -540,14 +580,72 @@ function App() {
                   </Row>
                 </Tab>
               </Tabs>
+            } /> */}
+
+            <Route path="/chat" element={
+              <ChatForm
+                SystemMessage="friendly"
+                handleSubmit={handleChatSubmit}
+                prompt={prompt}
+                setPrompt={setPrompt}
+                flLabel={label_general_chat}
+                working={working}
+                interactions={interactions}
+                handleCallBackFetchInteractions={handleFetchInteractions}
+                response={response}
+                string_headline="Chat Response"
+              />
             } />
+
+            <Route path="/" element={
+              <Home
+              />
+            } />
+
+            <Route path="/chat" element={
+              <ChatForm
+                SystemMessage="friendly"
+                handleSubmit={handleChatSubmit}
+                prompt={prompt}
+                setPrompt={setPrompt}
+                flLabel={label_general_chat}
+                working={working}
+                interactions={interactions}
+                handleCallBackFetchInteractions={handleFetchInteractions}
+                response={response}
+                string_headline="Chat Response"
+              />
+            } />
+
+            <Route path="/translation" element={
+              <TranslationChatForm
+                handleTranslateSubmit={handleTranslateSubmit}
+                working={working}
+                setPrompt={setPrompt}
+                flLabel={"Enter any text for Translation."}
+                prompt={prompt}
+                translatedText={translationResult}
+                resultData={translationResult}
+              />
+            } />
+
+            <Route path="/image" element={
+              <ImageCreation
+                callbackHandleImageSubmit={handleImageSubmit}
+              />
+
+            } />
+
             <Route path="/assistants" element={<AssistantsPage
               reloadAssistants={reloadAssistants}
               refresh={refresh}
-            />} />
+            />
+            } />
+
             <Route path="/assistants/reload" element={<AssistantsReloadPage
               reloadAssistants={reloadAssistants}
             />} />
+
             <Route path="/assistants/:assistantId"
               element={<AssistantsPage
                 handleAssistantSubmit={handleAssistantSubmit}
@@ -558,20 +656,36 @@ function App() {
                 interactions={interactions}
                 handleCallBackFetchInteractions={handleFetchInteractions}
               />} />
+
+            <Route path="/assistants-lab" element={
+              <AssistantsLab
+                handleAssitantsLabSubmit={handleAssistantsLabSubmit}
+                handleCallBackFetchInteractions={handleFetchInteractions}
+                interactions={interactions}
+                working={working}
+              />
+            } />
+
+            <Route path="*" element={
+              <NotFound
+              />} />
+
           </Routes>
         </Router>
 
-        <OverlayTrigger
-          placement="top-start"
-          delay={{ show: default_tooltip_show, hide: default_tooltip_hide }}
-          overlay={<Tooltip className="custom-tooltipper">{tooltip_version}</Tooltip>}
-        ><div
-          className="position-fixed bottom-0 end-0 m-2 px-2 bg-dark text-white opacity-75 rounded"
-          style={{ fontSize: '12px', width: 'auto', textAlign: 'right' }}
-        >
-            Version: {packageJson.version}
-          </div>
-        </OverlayTrigger>
+        <a href="mailto:degiorgi@rolf-benz-schule.de" className="text-decoration-none">
+          <OverlayTrigger
+            placement="top-start"
+            delay={{ show: default_tooltip_show, hide: default_tooltip_hide }}
+            overlay={<Tooltip className="custom-tooltipper">{tooltip_version}</Tooltip>}
+          ><div
+            className="position-fixed bottom-0 start-0 m-2 px-2 bg-dark text-white opacity-50 rounded pointerFinger"
+            style={{ fontSize: '12px', width: 'auto', textAlign: 'right' }}
+          >
+              Version: {packageJson.version}
+            </div>
+          </OverlayTrigger>
+        </a>
       </Container>
     </>
   );

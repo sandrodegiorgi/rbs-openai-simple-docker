@@ -1,16 +1,18 @@
-import { FloatingLabel, Form, Button, Spinner, OverlayTrigger, Tooltip, Card } from 'react-bootstrap';
+import { Form, Button, Spinner } from 'react-bootstrap';
 import { useState, useEffect } from 'react';
-import {
-    default_tooltip_show, default_tooltip_hide, tooltip_send_assistant,
-    label_send_general_chat, label_send_prompt_working,
-    interaction_type_chat
-} from './../../Consts';
+// import {
+//     default_tooltip_show, default_tooltip_hide, tooltip_send_assistant,
+//     label_send_general_chat, label_send_prompt_working,
+//     interaction_type_chat
+// } from './../../Consts';
 import InteractionsDisplay from '../InteractionsDisplay/InteractionsDisplay';
 import "./ChatForm.css";
-
+import ResponseDisplay from '../ResponseDisplay/ResponseDisplay';
+import { FaArrowUp } from "react-icons/fa";
 
 const ChatForm = ({ SystemMessage, handleSubmit, prompt, setPrompt,
-    flLabel, working, handleCallBackFetchInteractions, interactions }) => {
+    flLabel, working, handleCallBackFetchInteractions, interactions,
+    response, string_headline }) => {
 
     const [elapsedTime, setElapsedTime] = useState(0);
 
@@ -30,6 +32,7 @@ const ChatForm = ({ SystemMessage, handleSubmit, prompt, setPrompt,
             }, 100);
         } else {
             setElapsedTime(0);
+            setPrompt("");
         }
         return () => clearInterval(timer);
     }, [working]);
@@ -38,119 +41,94 @@ const ChatForm = ({ SystemMessage, handleSubmit, prompt, setPrompt,
         e.preventDefault();
         handleSubmit(e, SystemMessage);
     };
+
     return (
         <>
-            <InteractionsDisplay interactions={interactions} />
-
-            <Form onSubmit={onSubmit}>
-                <FloatingLabel
-                    controlId={`floatingInput_${flLabel}`}
-                    label={flLabel}
-                    className="mb-3"
-                >
-                    <Form.Control
-                        as="textarea"
-                        type="text"
-                        placeholder="Make a song about unicorns..."
-                        value={prompt}
-                        onChange={(e) => setPrompt(e.target.value)}
-                        style={{ height: '150px' }}
-                        disabled={working}
+            <div className="chat-container">
+                <div className="chat-history">
+                    <InteractionsDisplay interactions={interactions} />
+                    <ResponseDisplay
+                        response={response}
+                        string_headline={string_headline}
+                        working={working}
                     />
-                </FloatingLabel>
+                </div>
+                <div className="chat-input">
+                    <Form onSubmit={onSubmit} style={{ position: "relative" }}>
+                        <Form.Control
+                            className="ta-chat-input"
+                            as="textarea"
+                            type="text"
+                            placeholder={flLabel}
+                            value={prompt}
+                            onChange={(e) => setPrompt(e.target.value)}
+                            // style={{ height: '150px', paddingRight: '50px' }}
+                            style={{ height: '50%', paddingRight: '50px' }}
+                            disabled={working}
+                        />
 
-                <OverlayTrigger
-                    placement="bottom-end"
-                    delay={{ show: default_tooltip_show, hide: default_tooltip_hide }}
-                    overlay={<Tooltip className="custom-tooltipper">{tooltip_send_assistant}</Tooltip>}
-                >
-                    <Button
-                        type="submit"
-                        variant={working ? "secondary" : "primary"}
-                        disabled={working}
-                    >
-                        {working ? (
-                            <>
+                        <Button
+                            type="submit"
+                            variant={working ? "secondary" : "dark"}
+                            disabled={working}
+                            style={{
+                                position: "absolute",
+                                bottom: "10px",
+                                right: "10px",
+                                padding: "0",
+                                borderRadius: "50%",
+                                zIndex: 1,
+                                width: "30px",
+                                height: "30px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                            }}
+                        >
+                            {working ? (
                                 <Spinner
                                     as="span"
                                     animation="border"
                                     size="sm"
                                     role="status"
                                     aria-hidden="true"
-                                />{' '}
-                                {label_send_prompt_working} - {elapsedTime.toFixed(1)}s
-                            </>
-                        ) : (
-                            label_send_general_chat
-                        )}
-                    </Button>
-                </OverlayTrigger>
-            </Form>
+                                    style={{ width: "16px", height: "16px" }}
+                                />
+                            ) : (
+                                <FaArrowUp size={10} color="white" /> // Icon size
+                            )}
+                        </Button>
+
+                        {/* <Button
+                            type="submit"
+                            variant={working ? "secondary" : "dark"}
+                            disabled={working}
+                            style={{
+                                position: "absolute",
+                                bottom: "15px",
+                                right: "15px",
+                                paddingBottom: "8px",
+                                borderRadius: "50%",
+                                zIndex: 1,
+                            }}
+                        >
+                            {working ? (
+                                <Spinner
+                                    as="span"
+                                    animation="border"
+                                    size="sm"
+                                    role="status"
+                                    aria-hidden="true"
+                                />
+                            ) : (
+                                <FaArrowUp size={12} color='white' />
+                            )}
+                        </Button> */}
+                    </Form>
+                </div>
+            </div>
         </>
     );
-
-    // return (
-
-    //     {interactions.map((interaction, index) => (
-    //         <>
-    //             <Card key={index} className="my-3">
-    //                 <Card.Header as="h3">{interaction_type_chat}</Card.Header>
-    //                 <Card.Body>
-
-    //                     <ReactMarkdown
-    //                         children={interaction.content}
-    //                         remarkPlugins={[remarkGfm, remarkBreaks]}
-    //                         rehypePlugins={[rehypeRaw]}
-    //                         skipHtml={false}
-    //                     />
-
-    //     ))}
-    //                 </Card.Body>
-    //             </Card>
-    //             <Form onSubmit={onSubmit}>
-    //                 <FloatingLabel
-    //                     controlId={`floatingInput_${flLabel}`}
-    //                     label={flLabel}
-    //                     className="mb-3"
-    //                 >
-    //                     <Form.Control
-    //                         as="textarea"
-    //                         type="text"
-    //                         placeholder="Make a song about unicorns..."
-    //                         value={prompt}
-    //                         onChange={(e) => setPrompt(e.target.value)}
-    //                         style={{ height: '150px' }}
-    //                         disabled={working}
-    //                     />
-    //                 </FloatingLabel>
-    //                 <OverlayTrigger
-    //                     placement="bottom-end"
-    //                     delay={{ show: default_tooltip_show, hide: default_tooltip_hide }}
-    //                     overlay={<Tooltip className="custom-tooltipper">{tooltip_send_assistant}</Tooltip>}
-    //                 ><Button
-    //                     type="submit"
-    //                     variant={working ? "secondary" : "primary"}
-    //                     disabled={working}
-    //                 >
-    //                         {working ? (
-    //                             <>
-    //                                 <Spinner
-    //                                     as="span"
-    //                                     animation="border"
-    //                                     size="sm"
-    //                                     role="status"
-    //                                     aria-hidden="true"
-    //                                 />{' '}
-    //                                 {label_send_prompt_working}
-    //                             </>
-    //                         ) : (
-    //                             label_send_general_chat
-    //                         )}
-    //                     </Button>
-    //                 </OverlayTrigger>
-    //             </Form>
-    //         </>
-    //     );
 };
 
 export default ChatForm;

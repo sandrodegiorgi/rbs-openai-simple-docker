@@ -21,6 +21,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 PASSWORD = os.getenv("PASSWORD")
 PASSWORD_CHAT = os.getenv("PASSWORD_CHAT")
+PASSWORD_ASSISTANTS_LAB = os.getenv("PASSWORD_ASSISTANTS_LAB")
 PASSWORD_IMAGE = os.getenv("PASSWORD_IMAGE")
 PASSWORD_TRANSLATE = os.getenv("PASSWORD_TRANSLATE")
 FLASK_SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "fallback-dev-secret")
@@ -34,6 +35,7 @@ DB_URI = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}
 
 assistant_model = "gpt-4o"
 chat_model = "gpt-4o"
+assistants_lab_model = "gpt-4o"
 translate_model = "gpt-3.5-turbo"
 image_model = "dall-e-3"
 
@@ -369,7 +371,7 @@ def interact_with_assistant(virtual_url):
 def chat():
     prompt = request.args.get('prompt')
     user_id = request.headers.get("X-User-ID") or request.args.get("user_id")
-    system_message = "You are a helpful assistant." # XXX
+    system_message = "You are a very helpful assistant." # XXX
     is_streaming = request.args.get('stream', 'false').lower() == 'true'
     local_model = chat_model
     local_interaction_type = chat_interaction_type
@@ -441,8 +443,7 @@ def chat():
                 )
             
                 assistant_reply = ""
-            
-            
+                   
                 for chunk in response:
                     if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
                         chunk_message = chunk.choices[0].delta.content
@@ -466,7 +467,124 @@ def chat():
                 print(f"Error: {str(e)}")
                 yield f"data: [ERROR] {str(e)}\n\n"
 
-    # print("Handling streaming request (CHAT)")
+    return Response(
+        generate(),
+        content_type="text/event-stream",
+        headers={
+            "X-Accel-Buffering": "no",
+            "Cache-Control": "no-cache",
+        }
+    )
+
+@app.route('/api/assistants_lab', methods=['GET'])
+@check_password(PASSWORD_ASSISTANTS_LAB)
+def assistants_lab_chat():
+    
+    print(request.args)
+    
+    system_message = request.args.get('system_message')
+    assistant_prompt = request.args.get('assistant_prompt')
+    assistant_type = request.args.get('assistant_type')
+    user_id = request.headers.get("X-User-ID") or request.args.get("user_id")
+    is_streaming = request.args.get('stream', 'false').lower() == 'true'
+
+    local_model = assistants_lab_model
+    local_interaction_type = f"{assistant_type}-{user_id}"
+
+    print(f"assistant_prompt: {assistant_prompt}")
+
+    app = current_app._get_current_object()
+
+    if not is_streaming:
+        with app.app_context():
+            conversation_history = Interaction.query.filter_by(
+                user_id=user_id,
+                interaction_type=local_interaction_type
+            ).order_by(Interaction.created_at).all()
+
+            if not conversation_history:
+                db.session.add(
+                    Interaction(
+                        user_id=user_id,
+                        interaction_type=local_interaction_type,
+                        role="system",
+                        content=system_message,
+                        model=local_model,
+                    )
+                )
+                db.session.commit()
+
+        return jsonify({"status": "ok", "message": "Initial request received"})
+    
+    def generate():
+        with app.app_context():
+            try:
+                conversation_history = Interaction.query.filter_by(
+                    user_id=user_id,
+                    interaction_type=local_interaction_type
+                ).order_by(Interaction.created_at).all()
+                
+                messages = [{"role": interaction.role, "content": interaction.content} 
+                            for interaction in conversation_history]    
+                
+                # if not messages:
+                #     messages.append({"role": "system", "content": system_message})
+                #     db.session.add(
+                #          Interaction(
+                #             user_id=user_id,
+                #             interaction_type=local_interaction_type,
+                #             role="system",
+                #             content=system_message,
+                #             model=local_model,
+                #         )
+                #     )
+                    
+                messages.append({"role": "user", "content": assistant_prompt})
+            
+                print(f"Messages: {messages}")
+            
+                db.session.add(
+                    Interaction(
+                        user_id=user_id,
+                        interaction_type=local_interaction_type,
+                        role="user",
+                        content=assistant_prompt,
+                        model=local_model,
+                    )
+                )
+                db.session.commit()
+                
+                response = client.chat.completions.create(
+                    model=local_model,
+                    messages=messages,
+                    stream=True
+                )
+            
+                assistant_reply = ""
+                   
+                for chunk in response:
+                    if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
+                        chunk_message = chunk.choices[0].delta.content
+                        chunk_message = chunk_message.replace("\n", "[NEWLINE]")
+                        assistant_reply += chunk_message
+                        yield f"data: {chunk_message}\n\n"
+                yield f"data: [DONE]\n\n"
+            
+                db.session.add(
+                    Interaction(
+                        user_id=user_id,
+                        interaction_type=local_interaction_type,
+                        role="assistant",
+                        content=assistant_reply,
+                        model=local_model,
+                    )
+                )
+                db.session.commit()
+            
+            except Exception as e:
+                print(f"Error: {str(e)}")
+                yield f"data: [ERROR] {str(e)}\n\n"
+
     return Response(
         generate(),
         content_type="text/event-stream",
