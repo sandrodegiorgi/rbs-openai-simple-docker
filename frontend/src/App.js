@@ -32,6 +32,8 @@ import {
   headline_main
 } from './Consts';
 
+import 'katex/dist/katex.min.css';
+
 const packageJson = require('../package.json');
 
 const sessionUserId = crypto.randomUUID();

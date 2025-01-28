@@ -5,6 +5,9 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+
 
 
 import {
@@ -87,9 +90,14 @@ function InteractionsDisplay({ interactions }) {
 
                             <ReactMarkdown
                                 className={interaction.role === "assistant" ? "pt-3" : ""}
-                                children={interaction.content.replace(/\[NEWLINE\]/g, '\n')}
-                                remarkPlugins={[remarkGfm, remarkBreaks]}
-                                rehypePlugins={[rehypeRaw]}
+                                // children={interaction.content.replace(/\[NEWLINE\]/g, '\n')}
+                                children={interaction.content.replace(/\[NEWLINE\]/g, '\n')
+                                    .replace(/\\\[/g, '$$')
+                                    .replace(/\\\]/g, '$$')
+                                    .replace(/\\\(/g, '$')
+                                    .replace(/\\\)/g, '$')}
+                                remarkPlugins={[remarkGfm, remarkBreaks, remarkMath]}
+                                rehypePlugins={[rehypeRaw, rehypeKatex]}
                                 skipHtml={false}
                             />
                         </Card.Body>

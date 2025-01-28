@@ -6,6 +6,8 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 
 // import {
 //     default_tooltip_show, default_tooltip_hide, tooltip_send_assistant, tooltip_copy_raw_response_to_clipboard
@@ -69,9 +71,14 @@ const ResponseDisplay = ({ response, string_headline, working }) => {
                             </OverlayTrigger> */}
                            
                             <ReactMarkdown
-                                children={response}
-                                remarkPlugins={[remarkGfm, remarkBreaks]}
-                                rehypePlugins={[rehypeRaw]}
+                                // children={response}
+                                children={response
+                                    .replace(/\\\[/g, '$$')
+                                    .replace(/\\\]/g, '$$')
+                                    .replace(/\\\(/g, '$')
+                                    .replace(/\\\)/g, '$')}
+                                remarkPlugins={[remarkGfm, remarkBreaks, remarkMath]}
+                                rehypePlugins={[rehypeRaw, rehypeKatex]}
                                 skipHtml={false}
                             />
                         </Card.Text>
